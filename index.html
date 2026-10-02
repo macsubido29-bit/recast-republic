@@ -1,1199 +1,406 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Recast Republic | 1:12 Scale Collectibles</title>
-
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            background: #09090d;
-            color: #fff;
-            line-height: 1.6;
-        }
-
-        /* =========================
-           NAVIGATION
-        ========================= */
-
-        nav {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-
-            padding: 18px 7%;
-
-            background: rgba(9, 9, 13, 0.96);
-            backdrop-filter: blur(12px);
-
-            border-bottom: 1px solid #292930;
-        }
-
-        .logo {
-            font-size: 24px;
-            font-weight: 900;
-            letter-spacing: 2px;
-        }
-
-        .logo span {
-            color: #e63946;
-        }
-
-        nav ul {
-            display: flex;
-            gap: 28px;
-            list-style: none;
-        }
-
-        nav a {
-            color: #fff;
-            text-decoration: none;
-            font-weight: 700;
-            transition: 0.3s;
-        }
-
-        nav a:hover {
-            color: #e63946;
-        }
-
-        /* =========================
-           HERO
-        ========================= */
-
-        .hero {
-            min-height: 92vh;
-
-            display: flex;
-            align-items: center;
-
-            padding: 80px 7%;
-
-            background:
-                radial-gradient(
-                    circle at 80% 25%,
-                    rgba(230, 57, 70, 0.28),
-                    transparent 35%
-                ),
-                linear-gradient(
-                    135deg,
-                    #09090d,
-                    #16161d
-                );
-        }
-
-        .hero-content {
-            max-width: 850px;
-        }
-
-        .scale-label {
-            display: inline-block;
-
-            padding: 8px 14px;
-            margin-bottom: 20px;
-
-            border: 1px solid #e63946;
-            border-radius: 30px;
-
-            color: #e63946;
-            font-size: 14px;
-            font-weight: 900;
-            letter-spacing: 2px;
-        }
-
-        .hero h1 {
-            font-size: clamp(52px, 8vw, 100px);
-            line-height: 0.95;
-            margin-bottom: 30px;
-        }
-
-        .hero h1 span {
-            color: #e63946;
-        }
-
-        .hero p {
-            max-width: 700px;
-
-            color: #b7b7c2;
-
-            font-size: 20px;
-            line-height: 1.7;
-
-            margin-bottom: 35px;
-        }
-
-        .buttons {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            display: inline-block;
-
-            padding: 15px 25px;
-
-            border-radius: 8px;
-
-            text-decoration: none;
-
-            font-weight: 800;
-
-            transition: 0.3s;
-        }
-
-        .primary {
-            background: #e63946;
-            color: #fff;
-        }
-
-        .primary:hover {
-            background: #ff5260;
-            transform: translateY(-3px);
-        }
-
-        .secondary {
-            border: 1px solid #555;
-            color: #fff;
-        }
-
-        .secondary:hover {
-            background: #fff;
-            color: #000;
-        }
-
-        /* =========================
-           GENERAL SECTIONS
-        ========================= */
-
-        section {
-            padding: 90px 7%;
-        }
-
-        .section-title {
-            text-align: center;
-            margin-bottom: 50px;
-        }
-
-        .section-title h2 {
-            font-size: 44px;
-            margin-bottom: 10px;
-        }
-
-        .section-title p {
-            color: #999;
-        }
-
-        /* =========================
-           SCALE BANNER
-        ========================= */
-
-        .scale-banner {
-            padding: 25px 7%;
-
-            background: #e63946;
-
-            text-align: center;
-        }
-
-        .scale-banner strong {
-            font-size: 22px;
-        }
-
-        /* =========================
-           PRODUCTS
-        ========================= */
-
-        .products {
-            display: grid;
-
-            grid-template-columns:
-                repeat(auto-fit, minmax(240px, 1fr));
-
-            gap: 25px;
-        }
-
-        .product {
-            background: #15151c;
-
-            border: 1px solid #292932;
-
-            border-radius: 14px;
-
-            overflow: hidden;
-
-            transition: 0.3s;
-        }
-
-        .product:hover {
-            transform: translateY(-8px);
-            border-color: #e63946;
-        }
-
-        .product-image {
-            height: 240px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            background:
-                radial-gradient(
-                    circle,
-                    #30303a,
-                    #101014
-                );
-
-            font-size: 65px;
-        }
-
-        .product-info {
-            padding: 24px;
-        }
-
-        .product-info h3 {
-            font-size: 22px;
-            margin-bottom: 10px;
-        }
-
-        .product-info p {
-            color: #999;
-
-            margin-bottom: 18px;
-        }
-
-        .scale-tag {
-            display: inline-block;
-
-            margin-bottom: 15px;
-
-            padding: 5px 10px;
-
-            border-radius: 5px;
-
-            background: #292932;
-
-            color: #ddd;
-
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .price {
-            color: #e63946;
-
-            font-size: 20px;
-            font-weight: 900;
-        }
-
-        /* =========================
-           CATEGORIES
-        ========================= */
-
-        .categories {
-            background: #111116;
-        }
-
-        .category-grid {
-            display: grid;
-
-            grid-template-columns:
-                repeat(auto-fit, minmax(220px, 1fr));
-
-            gap: 20px;
-        }
-
-        .category {
-            padding: 30px;
-
-            background: #191920;
-
-            border: 1px solid #292932;
-
-            border-radius: 12px;
-
-            text-align: center;
-
-            transition: 0.3s;
-        }
-
-        .category:hover {
-            border-color: #e63946;
-            transform: translateY(-5px);
-        }
-
-        .category-icon {
-            font-size: 45px;
-            margin-bottom: 15px;
-        }
-
-        .category h3 {
-            margin-bottom: 8px;
-        }
-
-        .category p {
-            color: #999;
-        }
-
-        /* =========================
-           ABOUT
-        ========================= */
-
-        .about {
-            background: #0d0d12;
-        }
-
-        .about-grid {
-            display: grid;
-
-            grid-template-columns: 1fr 1fr;
-
-            gap: 60px;
-
-            align-items: center;
-        }
-
-        .about h2 {
-            font-size: 46px;
-
-            line-height: 1.1;
-
-            margin-bottom: 25px;
-        }
-
-        .about h2 span {
-            color: #e63946;
-        }
-
-        .about p {
-            color: #aaa;
-
-            font-size: 17px;
-
-            line-height: 1.8;
-        }
-
-        .about-box {
-            padding: 40px;
-
-            background: #18181f;
-
-            border: 1px solid #30303a;
-
-            border-radius: 15px;
-        }
-
-        .about-box h3 {
-            color: #e63946;
-
-            margin-bottom: 20px;
-
-            letter-spacing: 1px;
-        }
-
-        .about-box ul {
-            list-style: none;
-        }
-
-        .about-box li {
-            padding: 13px 0;
-
-            border-bottom: 1px solid #292932;
-        }
-
-        /* =========================
-           CUSTOM REQUEST
-        ========================= */
-
-        .custom {
-            text-align: center;
-
-            background:
-                radial-gradient(
-                    circle at center,
-                    #39141b,
-                    #09090d 65%
-                );
-        }
-
-        .custom h2 {
-            font-size: 52px;
-            margin-bottom: 20px;
-        }
-
-        .custom p {
-            max-width: 700px;
-
-            margin: 0 auto 30px;
-
-            color: #aaa;
-
-            font-size: 18px;
-        }
-
-        /* =========================
-           CONTACT
-        ========================= */
-
-        .contact {
-            max-width: 700px;
-
-            margin: auto;
-        }
-
-        .contact form {
-            display: grid;
-            gap: 15px;
-        }
-
-        input,
-        textarea,
-        select {
-            width: 100%;
-
-            padding: 16px;
-
-            background: #15151c;
-
-            border: 1px solid #333;
-
-            border-radius: 8px;
-
-            color: white;
-
-            font-size: 16px;
-        }
-
-        textarea {
-            min-height: 160px;
-            resize: vertical;
-        }
-
-        input:focus,
-        textarea:focus,
-        select:focus {
-            outline: none;
-            border-color: #e63946;
-        }
-
-        button {
-            padding: 16px;
-
-            background: #e63946;
-
-            border: none;
-
-            border-radius: 8px;
-
-            color: white;
-
-            font-size: 16px;
-
-            font-weight: 900;
-
-            cursor: pointer;
-
-            transition: 0.3s;
-        }
-
-        button:hover {
-            background: #ff5260;
-        }
-
-        /* =========================
-           FOOTER
-        ========================= */
-
-        footer {
-            padding: 40px 7%;
-
-            text-align: center;
-
-            background: #07070a;
-
-            color: #777;
-
-            border-top: 1px solid #222;
-        }
-
-        footer strong {
-            color: #fff;
-        }
-
-        /* =========================
-           MOBILE
-        ========================= */
-
-        @media (max-width: 750px) {
-
-            nav {
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            nav ul {
-                gap: 15px;
-
-                flex-wrap: wrap;
-
-                justify-content: center;
-
-                font-size: 14px;
-            }
-
-            .hero {
-                min-height: 80vh;
-            }
-
-            .about-grid {
-                grid-template-columns: 1fr;
-            }
-
-            section {
-                padding: 65px 6%;
-            }
-
-            .hero h1 {
-                font-size: 55px;
-            }
-
-            .custom h2 {
-                font-size: 40px;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>My Editable Website</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    color: #222;
+}
+
+/* TOP BAR */
+.editor-bar {
+    background: #111;
+    color: white;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.editor-bar button {
+    background: #00a86b;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.editor-bar button:hover {
+    background: #008f5b;
+}
+
+/* WEBSITE */
+.website {
+    max-width: 1200px;
+    margin: auto;
+    background: white;
+    min-height: 100vh;
+}
+
+/* HEADER */
+header {
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+}
+
+.logo {
+    font-size: 25px;
+    font-weight: bold;
+}
+
+nav a {
+    margin-left: 20px;
+    text-decoration: none;
+    color: #222;
+}
+
+/* HERO */
+.hero {
+    text-align: center;
+    padding: 100px 20px;
+    background: #eaf7f2;
+}
+
+.hero h1 {
+    font-size: 50px;
+    margin-bottom: 20px;
+}
+
+.hero p {
+    font-size: 20px;
+    color: #555;
+}
+
+.hero button {
+    margin-top: 20px;
+    padding: 14px 25px;
+    border: none;
+    background: #00a86b;
+    color: white;
+    border-radius: 7px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* PRODUCTS */
+.products {
+    padding: 60px 30px;
+}
+
+.products h2 {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+}
+
+.product {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    background: white;
+}
+
+.product img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+}
+
+.product-info {
+    padding: 20px;
+}
+
+.price {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* EDIT MODE */
+.editable {
+    outline: 2px dashed transparent;
+}
+
+.editable:hover {
+    outline: 2px dashed #00a86b;
+    cursor: text;
+}
+
+/* FOOTER */
+footer {
+    text-align: center;
+    padding: 30px;
+    background: #111;
+    color: white;
+}
+
+/* MOBILE */
+@media (max-width: 700px) {
+
+    header {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .hero h1 {
+        font-size: 35px;
+    }
+
+    .product-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
 </head>
 
 <body>
 
+<!-- EDITOR BAR -->
+<div class="editor-bar">
 
-<!-- =========================
-     NAVIGATION
-========================= -->
+    <strong>My Website Editor</strong>
 
-<nav>
-
-    <div class="logo">
-        RECAST <span>REPUBLIC</span>
-    </div>
-
-    <ul>
-        <li><a href="#home">Home</a></li>
-        <li><a href="#products">Shop</a></li>
-        <li><a href="#categories">Categories</a></li>
-        <li><a href="#about">About</a></li>
-        <li><a href="#custom">Custom</a></li>
-        <li><a href="#contact">Contact</a></li>
-    </ul>
-
-</nav>
-
-
-<!-- =========================
-     HERO
-========================= -->
-
-<section class="hero" id="home">
-
-    <div class="hero-content">
-
-        <div class="scale-label">
-            1:12 SCALE COLLECTIBLES
-        </div>
-
-        <h1>
-            BUILD YOUR<br>
-            <span>COLLECTION.</span>
-        </h1>
-
-        <p>
-            Premium custom accessories, parts and
-            display pieces designed specifically for
-            1:12 scale action figures and collectibles.
-        </p>
-
-        <div class="buttons">
-
-            <a href="#products" class="btn primary">
-                Explore Collection
-            </a>
-
-            <a href="#custom" class="btn secondary">
-                Request Custom
-            </a>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- =========================
-     SCALE BANNER
-========================= -->
-
-<div class="scale-banner">
-
-    <strong>
-        ★ DESIGNED FOR 1:12 SCALE COLLECTORS ★
-    </strong>
+    <button onclick="saveWebsite()">
+        💾 Save Website
+    </button>
 
 </div>
 
 
-<!-- =========================
-     PRODUCTS
-========================= -->
+<div class="website">
 
-<section id="products">
+    <!-- HEADER -->
+    <header>
 
-    <div class="section-title">
+        <div
+            class="logo editable"
+            contenteditable="true">
+            SaikiHub
+        </div>
 
-        <h2>
-            1:12 Scale Collection
-        </h2>
+        <nav>
+            <a href="#home">Home</a>
+            <a href="#products">Products</a>
+            <a href="#contact">Contact</a>
+        </nav>
 
-        <p>
-            Accessories and parts for your 1:12 scale figures.
+    </header>
+
+
+    <!-- HERO -->
+    <section class="hero" id="home">
+
+        <h1
+            class="editable"
+            contenteditable="true">
+            Welcome to SaikiHub
+        </h1>
+
+        <p
+            class="editable"
+            contenteditable="true">
+            Buy and sell collectibles, figures and accessories.
         </p>
 
-    </div>
-
-
-    <div class="products">
-
-
-        <div class="product">
-
-            <div class="product-image">
-                🪖
-            </div>
-
-            <div class="product-info">
-
-                <span class="scale-tag">
-                    1:12 SCALE
-                </span>
-
-                <h3>
-                    Tactical Accessories
-                </h3>
-
-                <p>
-                    Gear and accessories designed
-                    to enhance 1:12 scale figures.
-                </p>
-
-                <div class="price">
-                    From ₱150
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div class="product">
-
-            <div class="product-image">
-                🔫
-            </div>
-
-            <div class="product-info">
-
-                <span class="scale-tag">
-                    1:12 SCALE
-                </span>
-
-                <h3>
-                    Figure Equipment
-                </h3>
-
-                <p>
-                    Scale equipment and display accessories
-                    for custom figure projects.
-                </p>
-
-                <div class="price">
-                    From ₱200
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div class="product">
-
-            <div class="product-image">
-                🎒
-            </div>
-
-            <div class="product-info">
-
-                <span class="scale-tag">
-                    1:12 SCALE
-                </span>
-
-                <h3>
-                    Backpacks & Gear
-                </h3>
-
-                <p>
-                    Detailed 1:12 scale backpacks,
-                    equipment and character gear.
-                </p>
-
-                <div class="price">
-                    From ₱200
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div class="product">
-
-            <div class="product-image">
-                🏙️
-            </div>
-
-            <div class="product-info">
-
-                <span class="scale-tag">
-                    1:12 SCALE
-                </span>
-
-                <h3>
-                    Diorama Accessories
-                </h3>
-
-                <p>
-                    Build detailed environments for
-                    your 1:12 scale displays.
-                </p>
-
-                <div class="price">
-                    From ₱250
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div class="product">
-
-            <div class="product-image">
-                ⚔️
-            </div>
-
-            <div class="product-info">
-
-                <span class="scale-tag">
-                    1:12 SCALE
-                </span>
-
-                <h3>
-                    Weapons & Props
-                </h3>
-
-                <p>
-                    Display props and fantasy accessories
-                    for compatible 1:12 scale figures.
-                </p>
-
-                <div class="price">
-                    From ₱150
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div class="product">
-
-            <div class="product-image">
-                🧍
-            </div>
-
-            <div class="product-info">
-
-                <span class="scale-tag">
-                    1:12 SCALE
-                </span>
-
-                <h3>
-                    Custom Parts
-                </h3>
-
-                <p>
-                    Parts for customizers who want to
-                    create something different.
-                </p>
-
-                <div class="price">
-                    From ₱200
-                </div>
-
-            </div>
-
-        </div>
-
-
-    </div>
-
-</section>
-
-
-<!-- =========================
-     CATEGORIES
-========================= -->
-
-<section class="categories" id="categories">
-
-    <div class="section-title">
-
-        <h2>
-            Shop By Category
+        <button
+            class="editable"
+            contenteditable="true"
+            onclick="alert('Button clicked!')">
+            Shop Now
+        </button>
+
+    </section>
+
+
+    <!-- PRODUCTS -->
+    <section class="products" id="products">
+
+        <h2
+            class="editable"
+            contenteditable="true">
+            Featured Products
         </h2>
 
-        <p>
-            Everything focused around the 1:12 scale.
+
+        <div class="product-grid">
+
+            <!-- PRODUCT 1 -->
+            <div class="product">
+
+                <img
+                    src="https://images.unsplash.com/photo-1594736797933-d0501ba2fe65"
+                    alt="Product">
+
+                <div class="product-info">
+
+                    <h3
+                        class="editable"
+                        contenteditable="true">
+                        1:12 Scale Figure
+                    </h3>
+
+                    <p
+                        class="editable"
+                        contenteditable="true">
+                        Collectible figure for your display.
+                    </p>
+
+                    <div
+                        class="price editable"
+                        contenteditable="true">
+                        ₱1,500
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- PRODUCT 2 -->
+            <div class="product">
+
+                <img
+                    src="https://images.unsplash.com/photo-1608889825205-eebdb9fc5806"
+                    alt="Product">
+
+                <div class="product-info">
+
+                    <h3
+                        class="editable"
+                        contenteditable="true">
+                        Figure Accessories
+                    </h3>
+
+                    <p
+                        class="editable"
+                        contenteditable="true">
+                        Accessories for 1:12 scale figures.
+                    </p>
+
+                    <div
+                        class="price editable"
+                        contenteditable="true">
+                        ₱500
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- PRODUCT 3 -->
+            <div class="product">
+
+                <img
+                    src="https://images.unsplash.com/photo-1607604276583-eef5f5b6f1e4"
+                    alt="Product">
+
+                <div class="product-info">
+
+                    <h3
+                        class="editable"
+                        contenteditable="true">
+                        Display Items
+                    </h3>
+
+                    <p
+                        class="editable"
+                        contenteditable="true">
+                        Display accessories for collectors.
+                    </p>
+
+                    <div
+                        class="price editable"
+                        contenteditable="true">
+                        ₱800
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- CONTACT -->
+    <footer id="contact">
+
+        <p
+            class="editable"
+            contenteditable="true">
+            © 2026 SaikiHub - All Rights Reserved
         </p>
 
-    </div>
+    </footer>
 
+</div>
 
-    <div class="category-grid">
-
-
-        <div class="category">
-
-            <div class="category-icon">
-                🧩
-            </div>
-
-            <h3>
-                Accessories
-            </h3>
-
-            <p>
-                Small details that complete your figures.
-            </p>
-
-        </div>
-
-
-        <div class="category">
-
-            <div class="category-icon">
-                🛡️
-            </div>
-
-            <h3>
-                Figure Parts
-            </h3>
-
-            <p>
-                Parts for customizing your collection.
-            </p>
-
-        </div>
-
-
-        <div class="category">
-
-            <div class="category-icon">
-                🏙️
-            </div>
-
-            <h3>
-                Dioramas
-            </h3>
-
-            <p>
-                Build environments for your displays.
-            </p>
-
-        </div>
-
-
-        <div class="category">
-
-            <div class="category-icon">
-                🎨
-            </div>
-
-            <h3>
-                Custom Projects
-            </h3>
-
-            <p>
-                Turn your ideas into custom pieces.
-            </p>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- =========================
-     ABOUT
-========================= -->
-
-<section class="about" id="about">
-
-    <div class="about-grid">
-
-
-        <div>
-
-            <h2>
-                Made For<br>
-                <span>1:12 Collectors.</span>
-            </h2>
-
-            <p>
-
-                Recast Republic is built around the
-                1:12 scale collecting community.
-
-                <br><br>
-
-                From accessories and figure parts to
-                diorama pieces and custom projects,
-                every product is designed with
-                1:12 scale displays in mind.
-
-                <br><br>
-
-                Customize your figures.
-                Build your display.
-                Make your collection your own.
-
-            </p>
-
-        </div>
-
-
-        <div class="about-box">
-
-            <h3>
-                RECAST REPUBLIC
-            </h3>
-
-            <ul>
-
-                <li>
-                    ✓ 1:12 scale focused
-                </li>
-
-                <li>
-                    ✓ Custom accessories
-                </li>
-
-                <li>
-                    ✓ Figure parts
-                </li>
-
-                <li>
-                    ✓ Diorama accessories
-                </li>
-
-                <li>
-                    ✓ Custom projects
-                </li>
-
-                <li>
-                    ✓ Collector-focused designs
-                </li>
-
-            </ul>
-
-        </div>
-
-
-    </div>
-
-</section>
-
-
-<!-- =========================
-     CUSTOM
-========================= -->
-
-<section class="custom" id="custom">
-
-    <h2>
-        Build Something Custom.
-    </h2>
-
-    <p>
-
-        Have an idea for a 1:12 scale accessory,
-        figure part or diorama piece?
-
-        Tell us what you want to create.
-
-    </p>
-
-    <a href="#contact" class="btn primary">
-        Start A Custom Request
-    </a>
-
-</section>
-
-
-<!-- =========================
-     CONTACT
-========================= -->
-
-<section id="contact">
-
-    <div class="section-title">
-
-        <h2>
-            Contact Recast Republic
-        </h2>
-
-        <p>
-            Ask about products or submit a custom request.
-        </p>
-
-    </div>
-
-
-    <div class="contact">
-
-        <form onsubmit="sendMessage(event)">
-
-            <input
-                type="text"
-                id="name"
-                placeholder="Your Name"
-                required
-            >
-
-
-            <input
-                type="email"
-                id="email"
-                placeholder="Your Email"
-                required
-            >
-
-
-            <select id="requestType">
-
-                <option value="">
-                    What are you interested in?
-                </option>
-
-                <option>
-                    1:12 Scale Accessories
-                </option>
-
-                <option>
-                    1:12 Scale Figure Parts
-                </option>
-
-                <option>
-                    Diorama Accessories
-                </option>
-
-                <option>
-                    Custom Project
-                </option>
-
-                <option>
-                    Other
-                </option>
-
-            </select>
-
-
-            <textarea
-                id="message"
-                placeholder="Describe what you're looking for..."
-                required
-            ></textarea>
-
-
-            <button type="submit">
-                Send Request
-            </button>
-
-        </form>
-
-    </div>
-
-</section>
-
-
-<!-- =========================
-     FOOTER
-========================= -->
-
-<footer>
-
-    <p>
-        © 2026
-        <strong>Recast Republic</strong>.
-        All rights reserved.
-    </p>
-
-    <p style="margin-top:10px;">
-        1:12 Scale Collectibles • Accessories • Custom Parts
-    </p>
-
-</footer>
-
-
-<!-- =========================
-     JAVASCRIPT
-========================= -->
 
 <script>
 
-function sendMessage(event) {
+/*
+=========================================
+SAVE WEBSITE
+=========================================
+*/
 
-    event.preventDefault();
+function saveWebsite() {
 
-    const name =
-        document.getElementById("name").value;
+    const website = document.querySelector(".website");
 
-    const type =
-        document.getElementById("requestType").value;
-
-    alert(
-        "Thanks, " + name +
-        "! Your " +
-        (type || "custom") +
-        " request has been received."
+    localStorage.setItem(
+        "myWebsite",
+        website.innerHTML
     );
+
+    alert("Website saved!");
 
 }
 
-</script>
 
+/*
+=========================================
+LOAD WEBSITE
+=========================================
+*/
+
+window.onload = function() {
+
+    const savedWebsite =
+        localStorage.getItem("myWebsite");
+
+    if (savedWebsite) {
+
+        document.querySelector(".website").innerHTML =
+            savedWebsite;
+
+    }
+
+};
+
+</script>
 
 </body>
 </html>
