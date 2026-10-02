@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -142,7 +143,7 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <button type="submit" aria-label="Search">&#128269;</button>
 <button class="clear-search" type="button" aria-label="Clear search" onclick="clearSearch()">&times;</button>
 </form>
-<button id="cartButton" class="iconbtn" onclick="openPage('cart')">ðŸ›’<sup id="cartCount">0</sup></button>
+<button id="cartButton" class="iconbtn" onclick="openPage('cart')">🛒<sup id="cartCount">0</sup></button>
 </header>
 
 <main id="app" style="display:none">
@@ -164,10 +165,10 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <!-- CART -->
 <section id="cart" class="page">
 <button class="back" onclick="openPage('home')">â† Continue Shopping</button>
-<h2>ðŸ›’ My Cart</h2>
+<h2>🛒 My Cart</h2>
 <div class="card" id="cartItems"></div>
 <div class="card">
-<div class="row"><span>Subtotal</span><b id="subtotal">â‚±0</b></div>
+<div class="row"><span>Subtotal</span><b id="subtotal">₱0</b></div>
 <hr><button class="btn gold" style="width:100%" onclick="checkout()">Proceed to Checkout</button>
 </div>
 </section>
@@ -315,13 +316,13 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 </div>
 <div class="account-grid" style="margin:12px 0">
 <div class="card"><span>ðŸ“¦</span><h3 id="sellerProductCount">0</h3><small>Products</small></div>
-<div class="card"><span>ðŸ›’</span><h3 id="sellerOrderCount">0</h3><small>Orders</small></div>
-<div class="card"><span>ðŸ’°</span><h3 id="sellerSales">â‚±0</h3><small>Order Total</small></div>
+<div class="card"><span>🛒</span><h3 id="sellerOrderCount">0</h3><small>Orders</small></div>
+<div class="card"><span>💰</span><h3 id="sellerSales">₱0</h3><small>Order Total</small></div>
 </div>
 <div class="card">
 <h3>âž• Add New Product</h3>
 <label>Product Name</label><input id="newName" placeholder="Product name">
-<label>Price (â‚±)</label><input id="newPrice" type="number" min="1" placeholder="Price">
+<label>Price (₱)</label><input id="newPrice" type="number" min="1" placeholder="Price">
 <label>Emoji / Icon</label><input id="newEmoji" placeholder="e.g. ðŸ¤–">
 <label>Description</label><textarea id="newDesc" placeholder="Product details"></textarea>
 <label>Product Photo (optional)</label><input id="newPhoto" type="file" accept="image/*" onchange="handleProductPhoto(event)">
@@ -470,7 +471,7 @@ if(user)localStorage.setItem("rrCart_"+key(),JSON.stringify(cart));
 function profile(){return profiles[key()]||{}}
 function address(){return addresses[key()]||{}}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function money(n){return "â‚±"+Number(n).toLocaleString("en-PH")}
+function money(n){return "₱"+Number(n).toLocaleString("en-PH")}
 
 // AUTH
 function showRegister(){loginForm.style.display="none";registerForm.style.display="block"}
@@ -576,7 +577,7 @@ productList.innerHTML=list.length?list.map(p=>`
 <div class="info"><h3>${esc(p.name)}</h3><div class="price">${money(p.price)}</div>
 ${user?`
 <button class="btn light" onclick="showDetails(${p.id})">View Details</button>
-<button class="btn gold" onclick="addToCart(${p.id})">ðŸ›’ Add to Cart</button>`:""}
+<button class="btn gold" onclick="addToCart(${p.id})">🛒 Add to Cart</button>`:""}
 </div></div>`).join(""):'<p class="empty">No products found.</p>';
 }
 function showDetails(id){
