@@ -6,13 +6,18 @@ const path = require("node:path");
 const express = require("express");
 const helmet = require("helmet");
 const { rateLimit } = require("express-rate-limit");
-const { Pool } = require("pg");
+const Database = require("better-sqlite3");
 
 const app = express();
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const PORT = Number(process.env.PORT || 3000);
+const HOST = process.env.HOST || "127.0.0.1";
+const CORS_ORIGINS = new Set(
+  (process.env.CORS_ORIGINS || "https://macsubido29-bit.github.io,https://www.recastrepublic.com")
+    .split(",").map(origin => origin.trim()).filter(Boolean)
+);
 const SESSION_MS = 1000 * 60 * 60 * 24 * 14;
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "recastrepublic29@gmail.com").trim().toLowerCase();
+const DB_PATH = path.resolve(__dirname, process.env.DB_PATH || "data/recast-republic.sqlite");
 const DEFAULT_PRODUCTS = [
   [1, "Anime Action Figure", 850, "🦸", "Anime-inspired action figure for display."],
   [2, "Miniature Wooden Cabinet", 450, "🗄️", "Miniature cabinet for 1:12 scale dioramas."],
@@ -24,13 +29,91 @@ const DEFAULT_PRODUCTS = [
   [8, "Custom Display Stand", 250, "🎁", "Stand for your favorite figures."]
 ];
 
-if (!process.env.DATABASE_URL) {
-  console.error("DATABASE_URL is required. Copy .env.example to .env and configure PostgreSQL.");
-  process.exit(1);
+fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+const database = new Database(DB_PATH);
+database.pragma("journal_mode = WAL");
+database.pragma("foreign_keys = ON");
+database.pragma("busy_timeout = 5000");
+
+let queryQueue = Promise.resolve();
+function acquireDatabase() {
+  let unlock;
+  const previous = queryQueue;
+  queryQueue = new Promise(resolve => { unlock = resolve; });
+  return previous.then(() => unlock);
 }
+
+function executeQuery(sql, params = []) {
+  const normalized = sql
+    .replace(/now\(\)\s*\+\s*interval\s+'14 days'/gi, "datetime('now', '+14 days')")
+    .replace(/now\(\)/gi, "CURRENT_TIMESTAMP")
+    .replace(/::(?:bigint\[\]|bigint|int|date|jsonb)/gi, "")
+    .replace(/\s+for update\b/gi, "")
+    .replace(/\$\d+/g, "?")
+    .trim();
+  try {
+    const statement = database.prepare(normalized);
+    if (statement.reader) {
+      const rows = statement.all(...params);
+      return { rows, rowCount: rows.length };
+    }
+    const result = statement.run(...params);
+    return { rows: [], rowCount: result.changes, lastInsertRowid: result.lastInsertRowid };
+  } catch (error) {
+    if (error.code === "SQLITE_CONSTRAINT_UNIQUE" || error.code === "SQLITE_CONSTRAINT_PRIMARYKEY") {
+      error.code = "23505";
+    }
+    throw error;
+  }
+}
+
+const pool = {
+  async query(sql, params = []) {
+    const unlock = await acquireDatabase();
+    try {
+      return executeQuery(sql, params);
+    } finally {
+      unlock();
+    }
+  },
+  async connect() {
+    const unlock = await acquireDatabase();
+    let released = false;
+    return {
+      query: async (sql, params = []) => executeQuery(sql, params),
+      release: () => {
+        if (released) return;
+        released = true;
+        unlock();
+      }
+    };
+  },
+  async end() {
+    database.close();
+  }
+};
 if (process.env.TRUST_PROXY === "true") app.set("trust proxy", 1);
 app.disable("x-powered-by");
 app.use(helmet({ contentSecurityPolicy: false }));
+app.use((req, res, next) => {
+  const origin = req.get("Origin");
+  if (origin) {
+    const sameOrigin = origin === `${req.protocol}://${req.get("host")}`;
+    if (!sameOrigin && !CORS_ORIGINS.has(origin)) {
+      return res.status(403).json({ error: "This website is not allowed to access the store API." });
+    }
+    if (!sameOrigin) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+      res.setHeader("Vary", "Origin");
+      res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+      res.setHeader("Access-Control-Max-Age", "600");
+    }
+  }
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
 app.use(express.json({ limit: "1mb", type: "application/json" }));
 app.use((req, res, next) => {
   if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) req.body = {};
@@ -80,7 +163,7 @@ function setSessionCookie(res, token) {
   res.cookie("rr_session", token, {
     httpOnly: true,
     secure,
-    sameSite: "lax",
+    sameSite: secure ? "none" : "lax",
     path: "/",
     maxAge: SESSION_MS
   });
@@ -90,7 +173,7 @@ function clearSessionCookie(res) {
   res.clearCookie("rr_session", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/"
   });
 }
@@ -114,6 +197,31 @@ async function requireUser(req, res, next) {
       return res.status(401).json({ error: "Your session has expired. Please sign in again." });
     }
     req.user = publicUser(result.rows[0]);
+    next();
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function optionalUser(req, res, next) {
+  const token = req.headers.cookie?.split(";")
+    .map(part => part.trim())
+    .find(part => part.startsWith("rr_session="))
+    ?.slice("rr_session=".length);
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+  try {
+    const result = await pool.query(
+      `select u.id, u.name, u.email, u.role
+         from app_sessions s
+         join app_users u on u.id = s.user_id
+        where s.token_hash = $1 and s.expires_at > now()`,
+      [digest(decodeURIComponent(token))]
+    );
+    if (!result.rowCount) clearSessionCookie(res);
+    req.user = result.rowCount ? publicUser(result.rows[0]) : null;
     next();
   } catch (error) {
     next(error);
@@ -153,11 +261,19 @@ function productDto(row) {
 }
 
 function orderDto(row) {
+  let items = row.items;
+  if (typeof items === "string") {
+    try {
+      items = JSON.parse(items);
+    } catch {
+      throw new Error(`Order ${row.id} contains invalid stored item data.`);
+    }
+  }
   return {
     id: row.id,
     buyer: row.buyer_email,
     buyerName: row.buyer_name,
-    items: row.items,
+    items,
     total: Number(row.total),
     address: row.delivery_address,
     payment: row.payment_method,
@@ -175,7 +291,7 @@ function messageDto(row) {
   };
 }
 
-async function notifyAdmin(subject, body) {
+async function notifyAdmin(subject, body, replyTo) {
   const required = ["SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD", "SMTP_FROM"];
   if (required.some(name => !process.env[name])) return false;
   const nodemailer = require("nodemailer");
@@ -188,6 +304,7 @@ async function notifyAdmin(subject, body) {
   await transport.sendMail({
     from: process.env.SMTP_FROM,
     to: ADMIN_EMAIL,
+    ...(validEmail(replyTo) ? { replyTo } : {}),
     subject,
     text: body
   });
@@ -268,7 +385,7 @@ app.post("/api/auth/login", authLimiter, async (req, res, next) => {
   }
 });
 
-app.get("/api/auth/session", requireUser, (req, res) => res.json({ user: req.user }));
+app.get("/api/auth/session", optionalUser, (req, res) => res.json({ user: req.user }));
 
 app.post("/api/auth/logout", requireUser, async (req, res, next) => {
   try {
@@ -402,7 +519,9 @@ app.put("/api/profile", requireUser, async (req, res, next) => {
 app.get("/api/address", requireUser, async (req, res, next) => {
   try {
     const result = await pool.query("select address, address_data from profiles where user_id=$1", [req.user.id]);
-    res.json({ ...(result.rows[0]?.address_data || {}), full: result.rows[0]?.address || "" });
+    const stored = result.rows[0]?.address_data;
+    const data = typeof stored === "string" ? JSON.parse(stored) : (stored || {});
+    res.json({ ...data, full: result.rows[0]?.address || "" });
   } catch (error) {
     next(error);
   }
@@ -459,9 +578,10 @@ app.post("/api/orders", requireUser, async (req, res, next) => {
   const client = await pool.connect();
   try {
     await client.query("begin");
+    const itemIds = [...itemMap.keys()];
     const productRows = await client.query(
-      "select id, name, price, emoji from products where id = any($1::bigint[])",
-      [[...itemMap.keys()]]
+      `select id, name, price, emoji from products where id in (${itemIds.map(() => "?").join(",")})`,
+      itemIds
     );
     if (productRows.rowCount !== itemMap.size) {
       await client.query("rollback");
@@ -488,7 +608,8 @@ app.post("/api/orders", requireUser, async (req, res, next) => {
     try {
       emailSent = await notifyAdmin(
         `New Recast Republic order ${id}`,
-        `Order: ${id}\nBuyer: ${req.user.name} (${req.user.email})\nTotal: PHP ${total}\nDelivery address: ${address.trim()}\nStatus: To Ship\nItems: ${JSON.stringify(orderItems)}`
+        `Order: ${id}\nBuyer: ${req.user.name} (${req.user.email})\nTotal: PHP ${total}\nDelivery address: ${address.trim()}\nStatus: To Ship\nItems: ${JSON.stringify(orderItems)}`,
+        req.user.email
       );
     } catch (emailError) {
       console.error("Could not send new-order admin email:", emailError.message);
@@ -548,7 +669,8 @@ app.patch("/api/orders/:id", requireUser, async (req, res, next) => {
     try {
       emailSent = await notifyAdmin(
         `Order ${order.id} updated to ${status}`,
-        `Order: ${order.id}\nBuyer: ${order.buyer_name} (${order.buyer_email})\nDelivery address: ${order.delivery_address}\nStatus: ${status}\nTotal: PHP ${order.total}`
+        `Order: ${order.id}\nBuyer: ${order.buyer_name} (${order.buyer_email})\nDelivery address: ${order.delivery_address}\nStatus: ${status}\nTotal: PHP ${order.total}`,
+        order.buyer_email
       );
     } catch (emailError) {
       console.error("Could not send order-status admin email:", emailError.message);
@@ -622,7 +744,20 @@ app.post("/api/messages", requireUser, async (req, res, next) => {
     }
     const buyer = await client.query("select email from app_users where id=$1", [buyerId]);
     await client.query("commit");
-    res.status(201).json(messageDto({ ...result.rows[0], buyer_email: buyer.rows[0].email }));
+    let emailSent = false;
+    try {
+      emailSent = await notifyAdmin(
+        `New Recast Republic ${req.user.role === "buyer" ? "customer" : "seller"} message`,
+        `From: ${req.user.name} (${req.user.email})\nCustomer: ${buyer.rows[0].email}\nMessage: ${text}`,
+        req.user.role === "buyer" ? req.user.email : buyer.rows[0].email
+      );
+    } catch (emailError) {
+      console.error("Could not send message admin email:", emailError.message);
+    }
+    res.status(201).json({
+      ...messageDto({ ...result.rows[0], buyer_email: buyer.rows[0].email }),
+      adminEmailSent: emailSent
+    });
   } catch (error) {
     await client.query("rollback");
     next(error);
@@ -677,10 +812,6 @@ app.post("/api/admin/restore-products", requireUser, requireAdmin, async (req, r
         [id, name, price, emoji, description]
       );
     }
-    await client.query(
-      `select setval(pg_get_serial_sequence('products', 'id'),
-       greatest((select max(id) from products), 1), true)`
-    );
     await client.query("commit");
     const result = await client.query(
       "select id, name, description, price, emoji, photo_data from products order by id"
@@ -695,6 +826,9 @@ app.post("/api/admin/restore-products", requireUser, requireAdmin, async (req, r
 });
 
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
+app.get("/api-config.js", (req, res) => {
+  res.type("application/javascript").sendFile(path.join(__dirname, "api-config.js"));
+});
 app.use((req, res) => res.status(404).json({ error: "Not found." }));
 app.use((error, req, res, next) => {
   console.error("API request failed:", error);
@@ -703,8 +837,8 @@ app.use((error, req, res, next) => {
 });
 
 async function start() {
-  await pool.query(fs.readFileSync(path.join(__dirname, "db", "schema.sql"), "utf8"));
-  const count = await pool.query("select count(*)::int as count from products");
+  database.exec(fs.readFileSync(path.join(__dirname, "db", "schema.sql"), "utf8"));
+  const count = await pool.query("select count(*) as count from products");
   if (count.rows[0].count === 0) {
     for (const [id, name, price, emoji, description] of DEFAULT_PRODUCTS) {
       await pool.query(
@@ -713,12 +847,8 @@ async function start() {
         [id, name, price, emoji, description]
       );
     }
-    await pool.query(
-      `select setval(pg_get_serial_sequence('products', 'id'),
-       greatest((select max(id) from products), 1), true)`
-    );
   }
-  const server = app.listen(PORT, () => console.log(`Recast Republic listening on port ${PORT}`));
+  const server = app.listen(PORT, HOST, () => console.log(`Recast Republic listening on http://${HOST}:${PORT}`));
   const shutdown = () => server.close(async () => {
     await pool.end();
     process.exit(0);
