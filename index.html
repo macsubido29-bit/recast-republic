@@ -124,15 +124,10 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <label>Full Name</label><input id="regName" placeholder="Full name">
 <label>Email</label><input id="regEmail" type="email" placeholder="Email address">
 <label>Password</label><input id="regPassword" type="password" placeholder="Password">
-<label style="display:flex;align-items:flex-start;gap:8px;margin:4px 0 12px;font-weight:normal">
-<input id="privacyConsent" type="checkbox" style="width:auto;margin:2px 0 0">
-<span>I agree to store the account, profile, order, and support-message details I submit so the shop can provide its services. Anonymous browsing is not tracked.</span>
-</label>
 <button class="btn gold" style="width:100%" onclick="register()">Create Account</button>
 <p style="text-align:center"><a href="#" onclick="showLogin()" style="color:#d5ae68">Back to Login</a></p>
 </div>
-<p class="small" style="text-align:center;margin-top:15px">Accounts and store records are saved securely by this shop. Online payment is not available.</p>
-<p class="small" style="text-align:center">Only details you submit with an account, order, or message are stored. We do not log anonymous browsing activity.</p>
+<p class="small" style="text-align:center;margin-top:15px">Demo only. No real authentication or online payment.</p>
 <p style="text-align:center;margin-top:12px"><a href="#" onclick="showPublicCatalog();return false" style="color:#d5ae68">Continue browsing as a visitor</a></p>
 </div>
 </section>
@@ -152,7 +147,7 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <section id="home" class="page">
 <div class="banner">
 <p>WELCOME TO</p><h2>RECAST REPUBLIC</h2>
-<p>Collectibles, figures, miniatures and more. Visitors can browse all listings. We do not track anonymous browsing.</p>
+<p>Collectibles, figures, miniatures and more. Visitors can browse all listings.</p>
 <div id="visitorActions">
 <button class="btn gold" onclick="showAuth()">Buyer Login</button>
 <button class="btn light" onclick="showAuth();showRegister()">Register</button>
@@ -178,7 +173,7 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <section id="messages" class="page">
 <h2>💬 Messages</h2>
 <div class="card">
-<b>Recast Republic Support</b><p class="small">Messages are saved to the shop database and visible to you and authorized sellers.</p><hr>
+<b>Recast Republic Support</b><p class="small">Messages are saved in this browser. Replies from the seller appear here.</p><hr>
 <div id="chatLog" style="height:300px;overflow:auto"></div>
 <form class="row" onsubmit="event.preventDefault();sendMessage()">
 <input id="chatInput" placeholder="Type a message..." style="margin:0">
@@ -331,10 +326,9 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <button class="btn gold" style="width:100%" onclick="addProduct()">Add Product</button>
 </div>
 <div class="card"><h3>📦 Manage Products</h3><div id="sellerProductList"></div></div>
-<div id="restoreProductsCard" class="card"><h3>♻️ Restore Armory</h3><p class="small">Restore the original Recast Republic collectibles if the catalog was cleared.</p><button class="btn light" style="width:100%" onclick="restoreDefaultProducts()">Restore Default Collectibles</button></div>
-<div id="adminDataTools" class="card" hidden><h3>🗄️ Visitor Data</h3><p class="small">Export submitted accounts, profiles, products, orders, and messages. Anonymous browsing activity is not collected.</p><button class="btn light" style="width:100%" onclick="exportVisitorData()">Download Database Export</button></div>
+<div class="card"><h3>♻️ Restore Armory</h3><p class="small">Restore the original Recast Republic collectibles if the catalog was cleared.</p><button class="btn light" style="width:100%" onclick="restoreDefaultProducts()">Restore Default Collectibles</button></div>
 <div class="card"><h3>🧾 Customer Orders</h3><div id="sellerOrders"></div></div>
-<div class="card"><h3>💬 Customer Messages</h3><p class="small">Reply here in the app. Messages are stored in the shared shop database.</p><div id="sellerMessages"></div></div>
+<div class="card"><h3>💬 Customer Messages</h3><p class="small">Reply here in the app, or open an email to the buyer in your default mail app.</p><div id="sellerMessages"></div></div>
 <button class="btn red" style="width:100%" onclick="openPage('settings')">Exit Seller Mode</button>
 </section>
 </main>
@@ -359,75 +353,49 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 </div></div>
 <input id="editPhotoInput" type="file" accept="image/*" style="display:none" onchange="handleProductPhoto(event)">
 
+<script src="supabase-config.js"></script>
 <script>
 // DATA
-let products=[];
-let user=null;
-let cart=[];
-let orders=[];
-let notifications=[];
-let profiles={};
-let addresses={};
-let messages=[];
+const defaultProducts=[
+{id:1,name:"Anime Action Figure",price:850,emoji:"🦸",desc:"Anime-inspired action figure for display."},
+{id:2,name:"Miniature Wooden Cabinet",price:450,emoji:"🗄️",desc:"Miniature cabinet for 1:12 scale dioramas."},
+{id:3,name:"Chibi Character Figure",price:550,emoji:"👾",desc:"Cute chibi-style collectible."},
+{id:4,name:"Miniature School Desk",price:350,emoji:"🪑",desc:"Detailed miniature school desk."},
+{id:5,name:"Fantasy Warrior Figure",price:1200,emoji:"⚔️",desc:"Fantasy collectible display figure."},
+{id:6,name:"Miniature Room Set",price:1500,emoji:"🏠",desc:"Miniature room for dioramas."},
+{id:7,name:"Robot Collectible",price:950,emoji:"🤖",desc:"Robot-inspired display figure."},
+{id:8,name:"Custom Display Stand",price:250,emoji:"🎁",desc:"Stand for your favorite figures."}
+];
+let products=JSON.parse(localStorage.getItem("rrProducts")||"null");
+if(!Array.isArray(products)||products.length===0){
+products=defaultProducts.map(product=>({...product}));
+localStorage.setItem("rrProducts",JSON.stringify(products));
+}
+let users=JSON.parse(localStorage.getItem("rrUsers")||"{}");
+let user=JSON.parse(localStorage.getItem("rrCurrentUser")||"null");
+let cart=JSON.parse(localStorage.getItem("rrCart")||"[]");
+let orders=JSON.parse(localStorage.getItem("rrOrders")||"[]");
+let notifications=JSON.parse(localStorage.getItem("rrNotifications")||"[]");
+let profiles=JSON.parse(localStorage.getItem("rrProfiles")||"{}");
+let addresses=JSON.parse(localStorage.getItem("rrAddresses")||"{}");
+let messages=JSON.parse(localStorage.getItem("rrMessages")||"[]");
 let currentProduct=null;
 let newProductPhoto="";
 
+// SECURITY NOTE: Demo PIN only, not real authorization.
+const SELLER_PIN="seller123";
 const ADMIN_EMAIL="recastrepublic29@gmail.com";
-async function api(path,options={}){
-let response;
-try{
-response=await fetch("/api"+path,{credentials:"same-origin",...options,
-headers:{"Content-Type":"application/json",...(options.headers||{})}});
-}catch(error){
-throw new Error("Cannot reach the store database. Open this site through its Node.js server.");
-}
-let result={};
-try{result=await response.json()}catch{}
-if(!response.ok)throw new Error(result.error||"The database request failed.");
-return result;
-}
-async function refreshPrivateData(){
-let results=await Promise.all([
-api("/orders"),api("/messages"),api("/notifications"),api("/profile"),api("/address")
-]);
-orders=results[0];messages=results[1];notifications=results[2];
-profiles[key()]=results[3];addresses[key()]=results[4];
-}
-async function initializeApp(){
-if(location.protocol==="file:"){
-showPublicCatalog();
-setCatalogMessage("Open the store through its Node.js server to load shared catalog and account data.");
-return;
-}
-try{
-products=await api("/products");
-let session=await api("/auth/session");
-user=session.user;
-cart=JSON.parse(localStorage.getItem("rrCart_"+key())||"[]");
-await refreshPrivateData();
-enterApp();
-}catch(error){
-if(error.message.includes("Cannot reach the store database")){
-showPublicCatalog();
-setCatalogMessage("The shared catalog needs the store server. Start the Node.js app to connect to the database.");
-return;
-}
-if(error.message.includes("Please sign in")||error.message.includes("session has expired")){
-user=null;showPublicCatalog();return;
-}
-showPublicCatalog();
-setCatalogMessage("The store database is temporarily unavailable. Please try again later.");
-console.error("Store initialization failed:",error);
-}
-}
-function setCatalogMessage(message){
-let banner=document.querySelector("#home .banner");
-let existing=document.getElementById("catalogStatus");
-if(!existing){existing=document.createElement("p");existing.id="catalogStatus";existing.className="small";banner.appendChild(existing)}
-existing.textContent=message;
-}
 function key(){return user?.email?.toLowerCase()||"guest"}
 function save(){
+localStorage.setItem("rrProducts",JSON.stringify(products));
+localStorage.setItem("rrUsers",JSON.stringify(users));
+localStorage.setItem("rrCurrentUser",JSON.stringify(user));
+localStorage.setItem("rrCart",JSON.stringify(cart));
+localStorage.setItem("rrOrders",JSON.stringify(orders));
+localStorage.setItem("rrNotifications",JSON.stringify(notifications));
+localStorage.setItem("rrProfiles",JSON.stringify(profiles));
+localStorage.setItem("rrAddresses",JSON.stringify(addresses));
+localStorage.setItem("rrMessages",JSON.stringify(messages));
 if(user)localStorage.setItem("rrCart_"+key(),JSON.stringify(cart));
 }
 function profile(){return profiles[key()]||{}}
@@ -453,34 +421,29 @@ document.getElementById("home").classList.add("active");
 visitorActions.style.display="block";buyerShopButton.style.display="none";
 renderProducts();window.scrollTo(0,0);
 }
-async function register(){
+function register(){
 let name=regName.value.trim(),email=regEmail.value.trim().toLowerCase(),pass=regPassword.value;
-if(!name||!email.includes("@")||pass.length<8){alert("Enter your name, valid email and a password of at least 8 characters.");return}
-if(!privacyConsent.checked){alert("Please agree to the data storage notice to create an account.");return}
-try{
-let result=await api("/auth/register",{method:"POST",body:JSON.stringify({name,email,password:pass,privacyConsent:true})});
-user=result.user;cart=[];profiles[key()]={name:user.name,email:user.email};
-await refreshPrivateData();enterApp();
-}catch(error){alert(error.message)}
+if(!name||!email.includes("@")||pass.length<4){alert("Enter your name, valid email and a password of at least 4 characters.");return}
+if(users[email]){alert("Account already exists. Please login.");return}
+users[email]={name,password:pass};
+profiles[email]={name,email};
+user={name,email};
+cart=[];save();enterApp();
 }
-async function login(){
+function login(){
 let email=loginEmail.value.trim().toLowerCase(),pass=loginPassword.value;
 if(!email.includes("@")||!pass){alert("Enter valid login details.");return}
-try{
-let result=await api("/auth/login",{method:"POST",body:JSON.stringify({email,password:pass})});
-user=result.user;cart=JSON.parse(localStorage.getItem("rrCart_"+email)||"[]");
-await refreshPrivateData();enterApp();
-}catch(error){alert(error.message)}
+if(users[email]&&users[email].password!==pass){alert("Incorrect password.");return}
+if(!users[email]){alert("No account found. Please register first.");return}
+user={name:users[email].name,email};
+cart=JSON.parse(localStorage.getItem("rrCart_"+email)||"[]");
+save();enterApp();
 }
 function enterApp(){
 document.getElementById("login").classList.remove("active");header.style.display="flex";
 app.style.display="block";nav.style.display="flex";
 cartButton.style.display="block";
 visitorActions.style.display="none";buyerShopButton.style.display="inline-block";
-if(user.role==="buyer"){document.querySelector('[onclick="sellerLogin()"]')?.closest(".card")?.setAttribute("hidden","")}
-else{document.querySelector('[onclick="sellerLogin()"]')?.closest(".card")?.removeAttribute("hidden")}
-adminDataTools.hidden=user.role!=="admin";
-restoreProductsCard.hidden=user.role!=="admin";
 renderProducts();updateAccount();updateCart();openPage("home");
 }
 function logout(){
@@ -488,24 +451,20 @@ if(!confirm("Logout from Recast Republic?"))return;
 endSession();
 }
 function switchAccount(){endSession()}
-async function endSession(){
+function endSession(){
 if(user)localStorage.setItem("rrCart_"+key(),JSON.stringify(cart));
-try{await api("/auth/logout",{method:"POST"})}catch(error){console.error("Could not clear server session:",error)}
-user=null;cart=[];orders=[];notifications=[];messages=[];profiles={};addresses={};
+user=null;localStorage.setItem("rrCurrentUser","null");
 loginEmail.value="";loginPassword.value="";
 regName.value="";regEmail.value="";regPassword.value="";
-privacyConsent.checked=false;
 header.style.display="none";app.style.display="none";nav.style.display="none";
 document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+document.getElementById("login").classList.add("active");showLogin();
 showPublicCatalog();
 }
 
 // NAVIGATION
-async function openPage(id){
+function openPage(id){
 if(!user&&id!=="home"){showAuth();return}
-if(user&&["history","orders","notifications","messages","seller","profile","address"].includes(id)){
-try{await refreshPrivateData()}catch(error){alert(error.message);return}
-}
 document.querySelectorAll("main .page").forEach(p=>p.classList.remove("active"));
 document.getElementById(id).classList.add("active");
 document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
@@ -515,10 +474,6 @@ if(id==="cart")updateCart();
 if(id==="profile")loadProfile();
 if(id==="address")loadAddress();
 if(id==="history")renderHistory();
-if(id==="orders"){
-let status=ordersTitle.textContent;
-ordersList.innerHTML=buyerOrders().filter(order=>order.status===status).map(orderHTML).join("")||'<div class="card empty">No orders here yet.</div>';
-}
 if(id==="notifications")renderNotifications();
 if(id==="seller")renderSeller();
 if(id==="messages")renderChat();
@@ -591,23 +546,22 @@ checkoutSummary.innerHTML=cart.map(i=>{let p=products.find(x=>x.id===i.id);retur
 `<hr><b>Total: ${money(total)}</b>`;
 openModal("checkoutModal");
 }
-async function placeOrder(){
-if(!user){showAuth();return}
+function placeOrder(){
 let delivery=checkoutAddress.value.trim();if(!delivery){alert("Enter your delivery address.");return}
 let items=cart.map(i=>({...i}));
-try{
-let result=await api("/orders",{method:"POST",body:JSON.stringify({items,address:delivery,payment:payment.value})});
-orders.unshift(result.order);cart=[];save();closeModal("checkoutModal");updateCart();
-if(!result.adminEmailSent)alert("Order placed and saved. The admin email was not sent; check the server SMTP configuration.");
-await openPage("history");
-}catch(error){alert(error.message)}
+let total=items.reduce((s,i)=>s+products.find(p=>p.id===i.id).price*i.qty,0);
+let o={id:"RR"+Date.now().toString().slice(-8),buyer:user.email.toLowerCase(),
+buyerName:profile().name||user.name,items,total,address:delivery,
+payment:payment.value,status:"To Ship",date:new Date().toLocaleString()};
+orders.unshift(o);notifications.unshift({buyer:o.buyer,text:"Order "+o.id+" placed successfully."});
+cart=[];save();closeModal("checkoutModal");updateCart();openPage("history");
 }
 
 // ORDERS
 function orderHTML(o){
 return `<div class="card"><div class="row"><b>Order #${esc(o.id)}</b><span class="pill">${esc(o.status)}</span></div>
 <p class="small">${esc(o.date)}</p><hr>
-${o.items.map(i=>{let p=products.find(x=>x.id===i.id);return `<div class="order"><span class="emoji">${esc(i.emoji||p?.emoji||"📦")}</span><div class="details">${esc(i.name||p?.name||"Item")} × ${i.qty}</div></div>`}).join("")}
+${o.items.map(i=>{let p=products.find(x=>x.id===i.id);return `<div class="order"><span class="emoji">${p?.photo?`<img src="${esc(p.photo)}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:5px">`:esc(p?.emoji||"📦")}</span><div class="details">${esc(p?.name||"Item")} × ${i.qty}</div></div>`}).join("")}
 <p class="small">Payment: ${esc(o.payment)}</p><p class="small">Address: ${esc(o.address)}</p>
 <div class="row"><b>Total: ${money(o.total)}</b>
 ${o.status==="To Ship"?'<button class="btn red" onclick="cancelOrder(\''+esc(o.id)+'\')">Cancel Order</button>':o.status==="To Receive"?'<button class="btn gold" onclick="buyerReceived(\''+esc(o.id)+'\')">Received</button>':o.status==="Cancelled"?'<span class="small">This order was cancelled.</span>':'<span class="pill">Completed</span>'}
@@ -632,52 +586,48 @@ function openOrders(status){
 ordersList.innerHTML=buyerOrders().filter(o=>o.status===status).map(orderHTML).join("")||'<div class="card empty">No orders here yet.</div>';
 ordersTitle.textContent=status;openPage("orders");
 }
-async function buyerReceived(id){
+function buyerReceived(id){
 let o=orders.find(x=>x.id===id&&x.buyer?.toLowerCase()===user.email.toLowerCase());if(!o)return;
-try{let result=await api("/orders/"+encodeURIComponent(id),{method:"PATCH",body:JSON.stringify({status:"Completed"})});
-o.status=result.order.status;await refreshPrivateData();renderHistory();openOrders("To Receive");
-}catch(error){alert(error.message)}
+o.status="Completed";notifications.unshift({buyer:o.buyer,text:"Order "+id+" completed."});
+save();renderHistory();openOrders("To Receive");
 }
-async function cancelOrder(id){
+function cancelOrder(id){
 let o=orders.find(x=>x.id===id&&x.buyer?.toLowerCase()===user.email.toLowerCase());
 if(!o||o.status!=="To Ship"){alert("Only orders awaiting shipment can be cancelled.");return}
 if(!confirm("Cancel order "+id+"?"))return;
-try{let result=await api("/orders/"+encodeURIComponent(id),{method:"PATCH",body:JSON.stringify({status:"Cancelled"})});
-o.status=result.order.status;await refreshPrivateData();renderHistory();
-}catch(error){alert(error.message)}
+o.status="Cancelled";notifications.unshift({buyer:o.buyer,text:"Order "+id+" was cancelled."});
+save();renderHistory();renderSeller();
 }
 
 // ACCOUNT
 function updateAccount(){
 let p=profile();accountName.textContent=p.name||user.name;
 accountEmail.textContent=p.email||user.email;
-accountAvatar.innerHTML=p.pfp?`<img src="${esc(p.pfp)}" alt="Profile photo">`:"👤";
+accountAvatar.innerHTML=p.pfp?`<img src="${p.pfp}">`:"👤";
 }
 function loadProfile(){
 let p=profile();
 pName.value=p.name||user.name;pGender.value=p.gender||"";
 pBirthday.value=p.birthday||"";pPhone.value=p.phone||"";
 pEmail.value=p.email||user.email;pAddress.value=p.address||"";
-profileAvatar.innerHTML=p.pfp?`<img src="${esc(p.pfp)}" alt="Profile photo">`:"👤";
+profileAvatar.innerHTML=p.pfp?`<img src="${p.pfp}">`:"👤";
 }
-async function saveProfile(){
+function saveProfile(){
 let p={...profile(),name:pName.value.trim(),gender:pGender.value,
 birthday:pBirthday.value,phone:pPhone.value.trim(),
 email:pEmail.value.trim(),address:pAddress.value.trim()};
 if(!p.name||p.email.toLowerCase()!==user.email.toLowerCase()){alert("Enter a valid name. To change your login email, use your authentication account settings.");return}
-try{
-profiles[key()]=await api("/profile",{method:"PUT",body:JSON.stringify(p)});
-user.name=profiles[key()].name;updateAccount();alert("Profile saved!");await openPage("me");
-}catch(error){alert(error.message)}
+profiles[key()]=p;user.name=p.name;
+if(users[user.email.toLowerCase()])users[user.email.toLowerCase()].name=p.name;
+save();updateAccount();alert("Profile saved!");openPage("me");
 }
 function changePfp(e){
 let file=e.target.files[0];if(!file)return;
 if(!file.type.startsWith("image/")||file.size>500000){alert("Choose an image under 500KB.");return}
-let reader=new FileReader();reader.onerror=()=>alert("The selected photo could not be read.");reader.onload=async()=>{
-try{profiles[key()]=await api("/profile",{method:"PUT",body:JSON.stringify({...profile(),name:user.name,pfp:reader.result})});
-profileAvatar.innerHTML=`<img src="${esc(reader.result)}" alt="Profile photo">`;
-updateAccount();
-}catch(error){alert(error.message)}
+let reader=new FileReader();reader.onload=()=>{
+profiles[key()]={...profile(),pfp:reader.result};
+profileAvatar.innerHTML=`<img src="${reader.result}">`;
+updateAccount();save();
 };reader.readAsDataURL(file);
 }
 function loadAddress(){
@@ -686,15 +636,13 @@ aPhone.value=a.phone||profile().phone||"";
 aStreet.value=a.street||"";aCity.value=a.city||"";
 aProvince.value=a.province||"";aZip.value=a.zip||"";
 }
-async function saveAddress(){
+function saveAddress(){
 let a={name:aName.value.trim(),phone:aPhone.value.trim(),
 street:aStreet.value.trim(),city:aCity.value.trim(),
 province:aProvince.value.trim(),zip:aZip.value.trim()};
 if(!a.street||!a.city){alert("Street and city are required.");return}
 a.full=[a.name,a.phone,a.street,a.city,a.province,a.zip].filter(Boolean).join(", ");
-try{addresses[key()]=await api("/address",{method:"PUT",body:JSON.stringify(a)});
-alert("Address saved!");await openPage("me");
-}catch(error){alert(error.message)}
+addresses[key()]=a;save();alert("Address saved!");openPage("me");
 }
 
 // NOTIFICATIONS & CHAT
@@ -709,9 +657,8 @@ chatLog.scrollTop=chatLog.scrollHeight;
 }
 function sendMessage(){
 let msg=chatInput.value.trim();if(!msg)return;
-api("/messages",{method:"POST",body:JSON.stringify({text:msg})}).then(async message=>{
-messages.push(message);chatInput.value="";await refreshPrivateData();renderChat();
-}).catch(error=>alert(error.message));
+messages.push({buyer:user.email.toLowerCase(),sender:"buyer",text:msg,date:new Date().toLocaleString()});
+save();chatInput.value="";renderChat();
 }
 function askAI(){
 let msg=aiInput.value.trim();if(!msg)return;
@@ -728,7 +675,9 @@ aiLog.append(u,r);aiInput.value="";
 
 // SELLER MODE
 function sellerLogin(){
-if(!user||!["seller","admin"].includes(user.role)){alert("A seller or admin account is required. Ask the site administrator to authorize your account.");return}
+let pin=prompt("Seller access PIN:");
+if(pin===null)return;
+if(pin!==SELLER_PIN){alert("Access denied.");return}
 openPage("seller");
 }
 function renderSeller(){
@@ -765,21 +714,20 @@ return buyers.map(buyer=>({buyer,thread:messages.filter(m=>m.buyer?.toLowerCase(
 }
 function renderSellerMessages(){
 sellerMessages.innerHTML=messageThreads().map((t,i)=>`
-<div class="seller-product"><b>${esc(t.buyer)}</b>
+<div class="seller-product"><b>${esc(users[t.buyer]?.name||t.buyer)}</b>
 <div style="max-height:180px;overflow:auto">${t.thread.map(m=>`<p class="small"><b>${m.sender==="buyer"?"Buyer":"Seller"}:</b> ${esc(m.text)}</p>`).join("")}</div>
 <form onsubmit="event.preventDefault();replyToBuyer(${i})">
 <textarea id="sellerReply${i}" placeholder="Reply to this buyer..." required></textarea>
 <button class="btn gold" type="submit">Send Reply</button>
+<a class="btn light" href="mailto:${encodeURIComponent(t.buyer)}?subject=${encodeURIComponent("Recast Republic message")}">Reply by Email</a>
 </form></div>`).join("")||'<p class="empty">No customer messages yet.</p>';
 }
-async function replyToBuyer(index){
+function replyToBuyer(index){
 let thread=messageThreads()[index],field=document.getElementById("sellerReply"+index);
 if(!thread||!field)return;
 let text=field.value.trim();if(!text)return;
-try{
-let message=await api("/messages",{method:"POST",body:JSON.stringify({buyer:thread.buyer,text})});
-messages.push(message);await refreshPrivateData();renderSellerMessages();
-}catch(error){alert(error.message)}
+messages.push({buyer:thread.buyer,sender:"seller",text,date:new Date().toLocaleString()});
+save();renderSellerMessages();
 }
 function changeProductPhoto(id){
 editPhotoInput.dataset.productId=String(id);editPhotoInput.click();
@@ -805,11 +753,7 @@ let photo=canvas.toDataURL("image/jpeg",0.78);
 if(photo.length>350000){alert("This photo is too large to store. Choose a smaller image.");event.target.value="";return}
 if(productId!==null){
 let product=products.find(p=>p.id===productId);
-if(product){
-api("/products/"+productId,{method:"PATCH",body:JSON.stringify({...product,photo})}).then(async updated=>{
-products=products.map(item=>item.id===updated.id?updated:item);renderSeller();renderProducts();
-}).catch(error=>alert(error.message));
-}
+if(product){product.photo=photo;save();renderSeller();renderProducts()}
 }else{
 newProductPhoto=photo;newPhotoPreview.innerHTML=`<img src="${photo}" alt="New product preview">`;
 newPhotoPreview.style.display="flex";
@@ -820,68 +764,54 @@ image.src=reader.result;
 };
 reader.readAsDataURL(file);
 }
-async function addProduct(){
+function addProduct(){
 let name=newName.value.trim(),price=Number(newPrice.value),
 emoji=newEmoji.value.trim()||"📦",desc=newDesc.value.trim();
 if(!name||!Number.isFinite(price)||price<=0||!desc){alert("Enter valid product details.");return}
-try{
-let product=await api("/products",{method:"POST",body:JSON.stringify({name,price,emoji,desc,photo:newProductPhoto||""})});
-products.unshift(product);
+products.push({id:Date.now(),name,price,emoji,desc,photo:newProductPhoto||""});
 newProductPhoto="";newPhotoPreview.innerHTML="";newPhotoPreview.style.display="none";newPhoto.value="";
-newName.value="";newPrice.value="";newEmoji.value="";newDesc.value="";
+save();newName.value="";newPrice.value="";newEmoji.value="";newDesc.value="";
 renderSeller();renderProducts();alert("Product added!");
-}catch(error){alert(error.message)}
 }
-async function editProduct(id){
+function editProduct(id){
 let p=products.find(x=>x.id===id);if(!p)return;
 let n=prompt("Product name:",p.name);if(n===null)return;
 let pr=prompt("Price:",p.price);if(pr===null)return;
 let price=Number(pr);if(!n.trim()||!Number.isFinite(price)||price<=0){alert("Invalid details.");return}
 let em=prompt("Emoji:",p.emoji);if(em===null)return;
 let d=prompt("Description:",p.desc);if(d===null)return;
-let updated={...p,name:n.trim(),price,emoji:em.trim()||"📦",desc:d.trim()};
-try{
-let saved=await api("/products/"+id,{method:"PATCH",body:JSON.stringify(updated)});
-products=products.map(item=>item.id===id?saved:item);renderSeller();renderProducts();updateCart();alert("Product updated!");
-}catch(error){alert(error.message)}
+p.name=n.trim();p.price=price;p.emoji=em.trim()||"📦";p.desc=d.trim();
+save();renderSeller();renderProducts();updateCart();alert("Product updated!");
 }
-async function deleteProduct(id){
+function deleteProduct(id){
 let p=products.find(x=>x.id===id);if(!p||!confirm("Delete "+p.name+"?"))return;
-try{
-await api("/products/"+id,{method:"DELETE"});
 products=products.filter(x=>x.id!==id);cart=cart.filter(x=>x.id!==id);
-renderSeller();renderProducts();updateCart();
-}catch(error){alert(error.message)}
+save();renderSeller();renderProducts();updateCart();
 }
-async function restoreDefaultProducts(){
+function restoreDefaultProducts(){
 if(!confirm("Restore the original collectibles? This replaces the current product catalog."))return;
-try{
-products=await api("/admin/restore-products",{method:"POST",body:"{}"});
-renderSeller();renderProducts();updateCart();alert("The default collectibles have been restored.");
-}catch(error){alert(error.message)}
+products=defaultProducts.map(product=>({...product}));
+save();renderSeller();renderProducts();updateCart();
+alert("The default collectibles have been restored.");
 }
-async function exportVisitorData(){
-try{
-let data=await api("/admin/export");
-let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
-let url=URL.createObjectURL(blob),link=document.createElement("a");
-link.href=url;link.download="recast-republic-database-"+new Date().toISOString().slice(0,10)+".json";
-link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-}catch(error){alert(error.message)}
-}
-async function updateSellerOrder(id){
+function updateSellerOrder(id){
 let o=orders.find(x=>x.id===id);if(!o)return;
 let status=document.getElementById("status-"+id).value;
-try{
-let result=await api("/orders/"+encodeURIComponent(id),{method:"PATCH",body:JSON.stringify({status})});
-o.status=result.order.status;await refreshPrivateData();renderSeller();
-if(!result.adminEmailSent)alert("Order updated. The admin email was not sent; check the server SMTP configuration.");
-else alert("Order updated and admin email sent.");
-}catch(error){alert(error.message)}
+if(o.status!==status)notifications.unshift({buyer:o.buyer,text:"Your order "+id+" is now "+status});
+o.status=status;
+save();renderSeller();alert("Order updated!");
 }
 
 // START
-initializeApp();
+window.addEventListener("storage",event=>{
+if(!event.key)return;
+if(event.key==="rrProducts"){products=JSON.parse(event.newValue||"[]");renderProducts();if(document.getElementById("seller").classList.contains("active"))renderSeller()}
+if(event.key==="rrMessages"){messages=JSON.parse(event.newValue||"[]");if(user&&document.getElementById("messages").classList.contains("active"))renderChat();if(document.getElementById("seller").classList.contains("active"))renderSellerMessages()}
+if(event.key==="rrOrders"){orders=JSON.parse(event.newValue||"[]");if(document.getElementById("seller").classList.contains("active"))renderSeller()}
+if(event.key==="rrNotifications"){notifications=JSON.parse(event.newValue||"[]");if(user&&document.getElementById("notifications").classList.contains("active"))renderNotifications()}
+});
+if(user){enterApp()}else{showPublicCatalog()}
 </script>
 </body>
 </html>
+
