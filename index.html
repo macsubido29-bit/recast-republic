@@ -396,7 +396,12 @@ throw new Error("Cannot connect to the store API. Check the VPS and its CORS con
 }
 let result={};
 try{result=await response.json()}catch{}
-if(!response.ok)throw new Error(result.error||"The store request failed.");
+if(!response.ok){
+if(!response.headers.get("content-type")?.includes("application/json")&&response.status===404&&location.hostname.endsWith("github.io")){
+throw new Error("Registration needs the store API, but GitHub Pages only serves the website. Deploy the Node.js API and set its URL in api-config.js.");
+}
+throw new Error(result.error||`The store request failed (${response.status}).`);
+}
 return result;
 }
 async function refreshCatalog({quiet=false}={}){
