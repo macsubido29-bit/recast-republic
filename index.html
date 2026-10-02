@@ -128,6 +128,7 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <p style="text-align:center"><a href="#" onclick="showLogin()" style="color:#d5ae68">Back to Login</a></p>
 </div>
 <p class="small" style="text-align:center;margin-top:15px">Demo only. No real authentication or online payment.</p>
+<p style="text-align:center;margin-top:12px"><a href="#" onclick="showPublicCatalog();return false" style="color:#d5ae68">Continue browsing as a visitor</a></p>
 </div>
 </section>
 
@@ -138,7 +139,7 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <button type="submit" aria-label="Search">🔍</button>
 <button class="clear-search" type="button" aria-label="Clear search" onclick="clearSearch()">✕</button>
 </form>
-<button class="iconbtn" onclick="openPage('cart')">🛒<sup id="cartCount">0</sup></button>
+<button id="cartButton" class="iconbtn" onclick="openPage('cart')">🛒<sup id="cartCount">0</sup></button>
 </header>
 
 <main id="app" style="display:none">
@@ -146,8 +147,12 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <section id="home" class="page">
 <div class="banner">
 <p>WELCOME TO</p><h2>RECAST REPUBLIC</h2>
-<p>Collectibles, figures, miniatures and more.</p>
-<button class="btn gold" onclick="document.getElementById('catalog').scrollIntoView({behavior:'smooth'})">Shop Now</button>
+<p>Collectibles, figures, miniatures and more. Visitors can browse all listings.</p>
+<div id="visitorActions">
+<button class="btn gold" onclick="showAuth()">Buyer Login</button>
+<button class="btn light" onclick="showAuth();showRegister()">Register</button>
+</div>
+<button id="buyerShopButton" class="btn gold" style="display:none" onclick="document.getElementById('catalog').scrollIntoView({behavior:'smooth'})">Shop Now</button>
 </div>
 <h2 id="catalog">All Collectibles</h2>
 <div class="products" id="productList"></div>
@@ -401,6 +406,21 @@ function money(n){return "₱"+Number(n).toLocaleString("en-PH")}
 // AUTH
 function showRegister(){loginForm.style.display="none";registerForm.style.display="block"}
 function showLogin(){loginForm.style.display="block";registerForm.style.display="none"}
+function showAuth(){
+document.getElementById("login").classList.add("active");
+header.style.display="none";app.style.display="none";nav.style.display="none";
+showLogin();
+window.scrollTo(0,0);
+}
+function showPublicCatalog(){
+document.getElementById("login").classList.remove("active");
+header.style.display="flex";app.style.display="block";nav.style.display="none";
+cartButton.style.display="none";
+document.querySelectorAll("main .page").forEach(page=>page.classList.remove("active"));
+document.getElementById("home").classList.add("active");
+visitorActions.style.display="block";buyerShopButton.style.display="none";
+renderProducts();window.scrollTo(0,0);
+}
 function register(){
 let name=regName.value.trim(),email=regEmail.value.trim().toLowerCase(),pass=regPassword.value;
 if(!name||!email.includes("@")||pass.length<4){alert("Enter your name, valid email and a password of at least 4 characters.");return}
@@ -422,6 +442,8 @@ save();enterApp();
 function enterApp(){
 document.getElementById("login").classList.remove("active");header.style.display="flex";
 app.style.display="block";nav.style.display="flex";
+cartButton.style.display="block";
+visitorActions.style.display="none";buyerShopButton.style.display="inline-block";
 renderProducts();updateAccount();updateCart();openPage("home");
 }
 function logout(){
@@ -437,10 +459,12 @@ regName.value="";regEmail.value="";regPassword.value="";
 header.style.display="none";app.style.display="none";nav.style.display="none";
 document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
 document.getElementById("login").classList.add("active");showLogin();
+showPublicCatalog();
 }
 
 // NAVIGATION
 function openPage(id){
+if(!user&&id!=="home"){showAuth();return}
 document.querySelectorAll("main .page").forEach(p=>p.classList.remove("active"));
 document.getElementById(id).classList.add("active");
 document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
@@ -468,10 +492,13 @@ let list=products.filter(p=>(p.name+" "+p.desc+" "+p.emoji).toLowerCase().includ
 productList.innerHTML=list.length?list.map(p=>`
 <div class="product"><div class="photo">${p.photo?`<img src="${esc(p.photo)}" alt="${esc(p.name)}">`:esc(p.emoji)}</div>
 <div class="info"><h3>${esc(p.name)}</h3><div class="price">${money(p.price)}</div>
+${user?`
 <button class="btn light" onclick="showDetails(${p.id})">View Details</button>
-<button class="btn gold" onclick="addToCart(${p.id})">🛒 Add to Cart</button></div></div>`).join(""):'<p class="empty">No products found.</p>';
+<button class="btn gold" onclick="addToCart(${p.id})">🛒 Add to Cart</button>`:""}
+</div></div>`).join(""):'<p class="empty">No products found.</p>';
 }
 function showDetails(id){
+if(!user){showAuth();return}
 let p=products.find(x=>x.id===id);if(!p)return;currentProduct=p;
 modalContent.innerHTML=`<div class="photo" style="height:220px;border-radius:8px;margin:12px 0">${p.photo?`<img src="${esc(p.photo)}" alt="${esc(p.name)}">`:esc(p.emoji)}</div>
 <h2>${esc(p.name)}</h2><p class="price">${money(p.price)}</p><p>${esc(p.desc)}</p>
@@ -482,6 +509,7 @@ openModal("productModal");
 function openModal(id){document.getElementById(id).classList.add("show")}
 function closeModal(id){document.getElementById(id).classList.remove("show")}
 function addToCart(id,qty=1){
+if(!user){showAuth();return}
 qty=Math.floor(Number(qty));if(!Number.isFinite(qty)||qty<1||qty>99){alert("Quantity must be 1–99.");return}
 let p=products.find(x=>x.id===id);if(!p)return;
 let item=cart.find(x=>x.id===id);
@@ -782,9 +810,8 @@ if(event.key==="rrMessages"){messages=JSON.parse(event.newValue||"[]");if(user&&
 if(event.key==="rrOrders"){orders=JSON.parse(event.newValue||"[]");if(document.getElementById("seller").classList.contains("active"))renderSeller()}
 if(event.key==="rrNotifications"){notifications=JSON.parse(event.newValue||"[]");if(user&&document.getElementById("notifications").classList.contains("active"))renderNotifications()}
 });
-if(user){enterApp()}
+if(user){enterApp()}else{showPublicCatalog()}
 </script>
 </body>
 </html>
-
 
