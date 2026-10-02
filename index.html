@@ -22,6 +22,7 @@ header{background:var(--black);border-bottom:2px solid var(--maroon);
 .search{display:flex;flex:1;max-width:550px}
 .search input{margin:0;border-radius:6px 0 0 6px}
 .search button{background:var(--maroon);color:white;padding:0 16px;border-radius:0 6px 6px 0}
+.search .clear-search{background:#302629;border-left:1px solid var(--line);border-radius:0}
 .iconbtn{background:none;color:white;font-size:22px}
 main{max-width:1100px;margin:auto;padding:16px 12px 95px}
 .page{display:none}.page.active{display:block}
@@ -50,6 +51,7 @@ label{font-size:13px;font-weight:bold}
  border:1px solid var(--line);border-radius:9px}
 .photo{height:150px;background:#302629;display:flex;align-items:center;
  justify-content:center;font-size:55px}
+.photo img{width:100%;height:100%;object-fit:cover}
 .info{padding:11px;display:flex;flex-direction:column;flex:1}
 .info h3{font-size:14px;line-height:1.4}
 .price{color:var(--gold);font-weight:bold;margin:7px 0}
@@ -130,10 +132,11 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 
 <header id="header" style="display:none">
 <div class="logo">RECAST REPUBLIC</div>
-<div class="search">
-<input id="search" placeholder="Search collectibles..." oninput="renderProducts()">
-<button onclick="renderProducts()">🔍</button>
-</div>
+<form class="search" onsubmit="event.preventDefault();renderProducts()">
+<input id="search" type="search" placeholder="Search collectibles..." aria-label="Search collectibles" oninput="renderProducts()">
+<button type="submit" aria-label="Search">🔍</button>
+<button class="clear-search" type="button" aria-label="Clear search" onclick="clearSearch()">✕</button>
+</form>
 <button class="iconbtn" onclick="openPage('cart')">🛒<sup id="cartCount">0</sup></button>
 </header>
 
@@ -164,14 +167,12 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <section id="messages" class="page">
 <h2>💬 Messages</h2>
 <div class="card">
-<b>Recast Republic Support</b><hr>
-<div id="chatLog" style="height:300px;overflow:auto">
-<p class="small">Welcome! How can we help you?</p>
-</div>
-<div class="row">
+<b>Recast Republic Support</b><p class="small">Messages are saved in this browser. Replies from the seller appear here.</p><hr>
+<div id="chatLog" style="height:300px;overflow:auto"></div>
+<form class="row" onsubmit="event.preventDefault();sendMessage()">
 <input id="chatInput" placeholder="Type a message..." style="margin:0">
-<button class="btn gold" onclick="sendMessage()">Send</button>
-</div>
+<button class="btn gold" type="submit">Send</button>
+</form>
 </div>
 </section>
 
@@ -251,6 +252,7 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <button class="btn gold" style="width:100%" onclick="sellerLogin()">Enter Seller Mode</button>
 </div>
 <div class="card"><button class="btn red" style="width:100%" onclick="logout()">Logout</button></div>
+<div class="card"><button class="btn light" style="width:100%" onclick="switchAccount()">Switch Account / Register Another</button></div>
 </section>
 
 <!-- ADDRESS -->
@@ -313,10 +315,14 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <label>Price (₱)</label><input id="newPrice" type="number" min="1" placeholder="Price">
 <label>Emoji / Icon</label><input id="newEmoji" placeholder="e.g. 🤖">
 <label>Description</label><textarea id="newDesc" placeholder="Product details"></textarea>
+<label>Product Photo (optional)</label><input id="newPhoto" type="file" accept="image/*" onchange="handleProductPhoto(event)">
+<div id="newPhotoPreview" class="photo" style="display:none;height:120px;margin:0 0 12px;border-radius:6px"></div>
 <button class="btn gold" style="width:100%" onclick="addProduct()">Add Product</button>
 </div>
 <div class="card"><h3>📦 Manage Products</h3><div id="sellerProductList"></div></div>
+<div class="card"><h3>♻️ Restore Armory</h3><p class="small">Restore the original Recast Republic collectibles if the catalog was cleared.</p><button class="btn light" style="width:100%" onclick="restoreDefaultProducts()">Restore Default Collectibles</button></div>
 <div class="card"><h3>🧾 Customer Orders</h3><div id="sellerOrders"></div></div>
+<div class="card"><h3>💬 Customer Messages</h3><p class="small">Reply here in the app, or open an email to the buyer in your default mail app.</p><div id="sellerMessages"></div></div>
 <button class="btn red" style="width:100%" onclick="openPage('settings')">Exit Seller Mode</button>
 </section>
 </main>
@@ -339,6 +345,7 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <label>Payment Method</label><select id="payment"><option>Cash on Delivery</option><option>GCash (Demo)</option><option>Bank Transfer (Demo)</option></select>
 <button class="btn gold" style="width:100%" onclick="placeOrder()">Place Order</button>
 </div></div>
+<input id="editPhotoInput" type="file" accept="image/*" style="display:none" onchange="handleProductPhoto(event)">
 
 <script>
 // DATA
@@ -352,7 +359,11 @@ const defaultProducts=[
 {id:7,name:"Robot Collectible",price:950,emoji:"🤖",desc:"Robot-inspired display figure."},
 {id:8,name:"Custom Display Stand",price:250,emoji:"🎁",desc:"Stand for your favorite figures."}
 ];
-let products=JSON.parse(localStorage.getItem("rrProducts")||"null")||defaultProducts;
+let products=JSON.parse(localStorage.getItem("rrProducts")||"null");
+if(!Array.isArray(products)||products.length===0){
+products=defaultProducts.map(product=>({...product}));
+localStorage.setItem("rrProducts",JSON.stringify(products));
+}
 let users=JSON.parse(localStorage.getItem("rrUsers")||"{}");
 let user=JSON.parse(localStorage.getItem("rrCurrentUser")||"null");
 let cart=JSON.parse(localStorage.getItem("rrCart")||"[]");
@@ -360,7 +371,9 @@ let orders=JSON.parse(localStorage.getItem("rrOrders")||"[]");
 let notifications=JSON.parse(localStorage.getItem("rrNotifications")||"[]");
 let profiles=JSON.parse(localStorage.getItem("rrProfiles")||"{}");
 let addresses=JSON.parse(localStorage.getItem("rrAddresses")||"{}");
+let messages=JSON.parse(localStorage.getItem("rrMessages")||"[]");
 let currentProduct=null;
+let newProductPhoto="";
 
 // SECURITY NOTE: Demo PIN only, not real authorization.
 const SELLER_PIN="seller123";
@@ -374,6 +387,8 @@ localStorage.setItem("rrOrders",JSON.stringify(orders));
 localStorage.setItem("rrNotifications",JSON.stringify(notifications));
 localStorage.setItem("rrProfiles",JSON.stringify(profiles));
 localStorage.setItem("rrAddresses",JSON.stringify(addresses));
+localStorage.setItem("rrMessages",JSON.stringify(messages));
+if(user)localStorage.setItem("rrCart_"+key(),JSON.stringify(cart));
 }
 function profile(){return profiles[key()]||{}}
 function address(){return addresses[key()]||{}}
@@ -408,8 +423,13 @@ renderProducts();updateAccount();updateCart();openPage("home");
 }
 function logout(){
 if(!confirm("Logout from Recast Republic?"))return;
-localStorage.setItem("rrCart_"+key(),JSON.stringify(cart));
-user=null;header.style.display="none";app.style.display="none";nav.style.display="none";
+endSession();
+}
+function switchAccount(){endSession()}
+function endSession(){
+if(user)localStorage.setItem("rrCart_"+key(),JSON.stringify(cart));
+user=null;localStorage.setItem("rrCurrentUser","null");
+header.style.display="none";app.style.display="none";nav.style.display="none";
 document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
 login.classList.add("active");showLogin();
 }
@@ -427,22 +447,28 @@ if(id==="address")loadAddress();
 if(id==="history")renderHistory();
 if(id==="notifications")renderNotifications();
 if(id==="seller")renderSeller();
+if(id==="messages")renderChat();
 window.scrollTo(0,0);
 }
 
 // PRODUCTS
+function clearSearch(){
+document.getElementById("search").value="";
+renderProducts();
+document.getElementById("search").focus();
+}
 function renderProducts(){
-let q=(document.getElementById("search")?.value||"").toLowerCase();
-let list=products.filter(p=>(p.name+" "+p.desc).toLowerCase().includes(q));
+let q=(document.getElementById("search")?.value||"").trim().toLowerCase();
+let list=products.filter(p=>(p.name+" "+p.desc+" "+p.emoji).toLowerCase().includes(q));
 productList.innerHTML=list.length?list.map(p=>`
-<div class="product"><div class="photo">${esc(p.emoji)}</div>
+<div class="product"><div class="photo">${p.photo?`<img src="${esc(p.photo)}" alt="${esc(p.name)}">`:esc(p.emoji)}</div>
 <div class="info"><h3>${esc(p.name)}</h3><div class="price">${money(p.price)}</div>
 <button class="btn light" onclick="showDetails(${p.id})">View Details</button>
 <button class="btn gold" onclick="addToCart(${p.id})">🛒 Add to Cart</button></div></div>`).join(""):'<p class="empty">No products found.</p>';
 }
 function showDetails(id){
 let p=products.find(x=>x.id===id);if(!p)return;currentProduct=p;
-modalContent.innerHTML=`<div style="font-size:85px;text-align:center;padding:18px">${esc(p.emoji)}</div>
+modalContent.innerHTML=`<div class="photo" style="height:220px;border-radius:8px;margin:12px 0">${p.photo?`<img src="${esc(p.photo)}" alt="${esc(p.name)}">`:esc(p.emoji)}</div>
 <h2>${esc(p.name)}</h2><p class="price">${money(p.price)}</p><p>${esc(p.desc)}</p>
 <label>Quantity</label><input id="detailQty" type="number" min="1" max="99" value="1">
 <button class="btn gold" style="width:100%" onclick="addToCart(${p.id},Number(detailQty.value));closeModal('productModal')">Add to Cart</button>`;
@@ -491,10 +517,10 @@ function placeOrder(){
 let delivery=checkoutAddress.value.trim();if(!delivery){alert("Enter your delivery address.");return}
 let items=cart.map(i=>({...i}));
 let total=items.reduce((s,i)=>s+products.find(p=>p.id===i.id).price*i.qty,0);
-let o={id:"RR"+Date.now().toString().slice(-8),buyer:user.email,
+let o={id:"RR"+Date.now().toString().slice(-8),buyer:user.email.toLowerCase(),
 buyerName:profile().name||user.name,items,total,address:delivery,
 payment:payment.value,status:"To Ship",date:new Date().toLocaleString()};
-orders.unshift(o);notifications.unshift("Order "+o.id+" placed successfully.");
+orders.unshift(o);notifications.unshift({buyer:o.buyer,text:"Order "+o.id+" placed successfully."});
 cart=[];save();closeModal("checkoutModal");updateCart();openPage("history");
 }
 
@@ -502,21 +528,28 @@ cart=[];save();closeModal("checkoutModal");updateCart();openPage("history");
 function orderHTML(o){
 return `<div class="card"><div class="row"><b>Order #${esc(o.id)}</b><span class="pill">${esc(o.status)}</span></div>
 <p class="small">${esc(o.date)}</p><hr>
-${o.items.map(i=>{let p=products.find(x=>x.id===i.id);return `<div class="order"><span class="emoji">${esc(p?.emoji||"📦")}</span><div class="details">${esc(p?.name||"Item")} × ${i.qty}</div></div>`}).join("")}
+${o.items.map(i=>{let p=products.find(x=>x.id===i.id);return `<div class="order"><span class="emoji">${p?.photo?`<img src="${esc(p.photo)}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:5px">`:esc(p?.emoji||"📦")}</span><div class="details">${esc(p?.name||"Item")} × ${i.qty}</div></div>`}).join("")}
 <p class="small">Payment: ${esc(o.payment)}</p><p class="small">Address: ${esc(o.address)}</p>
 <div class="row"><b>Total: ${money(o.total)}</b>
-${o.status==="To Ship"?'<span class="small">Awaiting shipment</span>':o.status==="To Receive"?'<button class="btn gold" onclick="buyerReceived(\''+o.id+'\')">Received</button>':'<span class="pill">Completed</span>'}</div></div>`;
+${o.status==="To Ship"?'<button class="btn red" onclick="cancelOrder(\''+esc(o.id)+'\')">Cancel Order</button>':o.status==="To Receive"?'<button class="btn gold" onclick="buyerReceived(\''+esc(o.id)+'\')">Received</button>':o.status==="Cancelled"?'<span class="small">This order was cancelled.</span>':'<span class="pill">Completed</span>'}</div></div>`;
 }
-function buyerOrders(){return orders.filter(o=>o.buyer===user.email)}
+function buyerOrders(){return orders.filter(o=>o.buyer?.toLowerCase()===user.email.toLowerCase())}
 function renderHistory(){historyList.innerHTML=buyerOrders().map(orderHTML).join("")||'<div class="card empty">No orders yet.</div>'}
 function openOrders(status){
 ordersList.innerHTML=buyerOrders().filter(o=>o.status===status).map(orderHTML).join("")||'<div class="card empty">No orders here yet.</div>';
 ordersTitle.textContent=status;openPage("orders");
 }
 function buyerReceived(id){
-let o=orders.find(x=>x.id===id&&x.buyer===user.email);if(!o)return;
-o.status="Completed";notifications.unshift("Order "+id+" completed.");
+let o=orders.find(x=>x.id===id&&x.buyer?.toLowerCase()===user.email.toLowerCase());if(!o)return;
+o.status="Completed";notifications.unshift({buyer:o.buyer,text:"Order "+id+" completed."});
 save();renderHistory();openOrders("To Receive");
+}
+function cancelOrder(id){
+let o=orders.find(x=>x.id===id&&x.buyer?.toLowerCase()===user.email.toLowerCase());
+if(!o||o.status!=="To Ship"){alert("Only orders awaiting shipment can be cancelled.");return}
+if(!confirm("Cancel order "+id+"?"))return;
+o.status="Cancelled";notifications.unshift({buyer:o.buyer,text:"Order "+id+" was cancelled."});
+save();renderHistory();renderSeller();
 }
 
 // ACCOUNT
@@ -566,16 +599,18 @@ addresses[key()]=a;save();alert("Address saved!");openPage("me");
 
 // NOTIFICATIONS & CHAT
 function renderNotifications(){
-let mine=notifications.filter(n=>n.buyer===user.email||!n.buyer);
+let mine=notifications.filter(n=>typeof n==="string"||n.buyer?.toLowerCase()===user.email.toLowerCase());
 notificationList.innerHTML=mine.map(n=>`<div style="padding:12px 0;border-bottom:1px solid var(--line)">🔔 ${esc(n.text||n)}</div>`).join("")||'<p class="empty">No notifications yet.</p>';
+}
+function renderChat(){
+let thread=messages.filter(m=>m.buyer?.toLowerCase()===user.email.toLowerCase());
+chatLog.innerHTML=thread.map(m=>`<p style="text-align:${m.sender==="buyer"?"right":"left"};margin:10px 0"><span class="${m.sender==="seller"?"small":""}">${m.sender==="buyer"?"You":"Seller"}: ${esc(m.text)}</span><br><span class="small">${esc(m.date)}</span></p>`).join("")||'<p class="small">Welcome! Send a message to contact the seller.</p>';
+chatLog.scrollTop=chatLog.scrollHeight;
 }
 function sendMessage(){
 let msg=chatInput.value.trim();if(!msg)return;
-let row=document.createElement("p");row.style.textAlign="right";
-row.textContent="You: "+msg;chatLog.appendChild(row);
-let reply=document.createElement("p");reply.className="small";
-reply.textContent="Store: Thank you for contacting Recast Republic. This demo does not have live messaging.";
-chatLog.appendChild(reply);chatInput.value="";chatLog.scrollTop=chatLog.scrollHeight;
+messages.push({buyer:user.email.toLowerCase(),sender:"buyer",text:msg,date:new Date().toLocaleString()});
+save();chatInput.value="";renderChat();
 }
 function askAI(){
 let msg=aiInput.value.trim();if(!msg)return;
@@ -603,9 +638,10 @@ sellerOrderCount.textContent=orders.length;
 sellerSales.textContent=money(orders.reduce((s,o)=>s+o.total,0));
 sellerProductList.innerHTML=products.map(p=>`
 <div class="seller-product"><div class="row"><div>
-<b>${esc(p.emoji)} ${esc(p.name)}</b><p class="price">${money(p.price)}</p>
+<div class="row" style="justify-content:flex-start">${p.photo?`<img src="${esc(p.photo)}" alt="${esc(p.name)}" style="width:64px;height:64px;object-fit:cover;border-radius:6px">`:`<span>${esc(p.emoji)}</span>`}<b>${esc(p.name)}</b></div><p class="price">${money(p.price)}</p>
 <p class="small">${esc(p.desc)}</p></div>
-<div><button class="btn gold" onclick="editProduct(${p.id})">✏️ Edit</button>
+<div><button class="btn light" onclick="changeProductPhoto(${p.id})">📷 Photo</button>
+<button class="btn gold" onclick="editProduct(${p.id})">✏️ Edit</button>
 <button class="btn red" onclick="deleteProduct(${p.id})">🗑️ Delete</button></div>
 </div></div>`).join("")||'<p class="empty">No products.</p>';
 sellerOrders.innerHTML=orders.map(o=>`
@@ -617,15 +653,75 @@ sellerOrders.innerHTML=orders.map(o=>`
 <option ${o.status==="To Ship"?"selected":""}>To Ship</option>
 <option ${o.status==="To Receive"?"selected":""}>To Receive</option>
 <option ${o.status==="Completed"?"selected":""}>Completed</option>
+<option ${o.status==="Cancelled"?"selected":""}>Cancelled</option>
 </select>
 <button class="btn gold" onclick="updateSellerOrder('${esc(o.id)}')">Update Order</button>
 </div>`).join("")||'<p class="empty">No orders yet.</p>';
+renderSellerMessages();
+}
+function messageThreads(){
+let buyers=[...new Set(messages.map(m=>m.buyer?.toLowerCase()).filter(Boolean))];
+return buyers.map(buyer=>({buyer,thread:messages.filter(m=>m.buyer?.toLowerCase()===buyer)}))
+.sort((a,b)=>new Date(b.thread[b.thread.length-1].date)-new Date(a.thread[a.thread.length-1].date));
+}
+function renderSellerMessages(){
+sellerMessages.innerHTML=messageThreads().map((t,i)=>`
+<div class="seller-product"><b>${esc(users[t.buyer]?.name||t.buyer)}</b>
+<div style="max-height:180px;overflow:auto">${t.thread.map(m=>`<p class="small"><b>${m.sender==="buyer"?"Buyer":"Seller"}:</b> ${esc(m.text)}</p>`).join("")}</div>
+<form onsubmit="event.preventDefault();replyToBuyer(${i})">
+<textarea id="sellerReply${i}" placeholder="Reply to this buyer..." required></textarea>
+<button class="btn gold" type="submit">Send Reply</button>
+<a class="btn light" href="mailto:${encodeURIComponent(t.buyer)}?subject=${encodeURIComponent("Recast Republic message")}">Reply by Email</a>
+</form></div>`).join("")||'<p class="empty">No customer messages yet.</p>';
+}
+function replyToBuyer(index){
+let thread=messageThreads()[index],field=document.getElementById("sellerReply"+index);
+if(!thread||!field)return;
+let text=field.value.trim();if(!text)return;
+messages.push({buyer:thread.buyer,sender:"seller",text,date:new Date().toLocaleString()});
+save();renderSellerMessages();
+}
+function changeProductPhoto(id){
+editPhotoInput.dataset.productId=String(id);editPhotoInput.click();
+}
+function handleProductPhoto(event){
+let file=event.target.files[0];if(!file)return;
+if(!file.type.startsWith("image/")){alert("Choose an image file.");event.target.value="";return}
+let productId=event.target.id==="editPhotoInput"?Number(event.target.dataset.productId):null;
+let reader=new FileReader();
+reader.onerror=()=>{alert("The selected photo could not be read. Please try another image.");event.target.value="";};
+reader.onload=()=>{
+let image=new Image();
+image.onerror=()=>{alert("The selected photo is not a valid image.");event.target.value="";};
+image.onload=()=>{
+let scale=Math.min(1,900/Math.max(image.naturalWidth,image.naturalHeight));
+let canvas=document.createElement("canvas");
+canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));
+canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
+let context=canvas.getContext("2d");
+if(!context){alert("Your browser could not process this photo.");event.target.value="";return}
+context.drawImage(image,0,0,canvas.width,canvas.height);
+let photo=canvas.toDataURL("image/jpeg",0.78);
+if(photo.length>350000){alert("This photo is too large to store. Choose a smaller image.");event.target.value="";return}
+if(productId!==null){
+let product=products.find(p=>p.id===productId);
+if(product){product.photo=photo;save();renderSeller();renderProducts()}
+}else{
+newProductPhoto=photo;newPhotoPreview.innerHTML=`<img src="${photo}" alt="New product preview">`;
+newPhotoPreview.style.display="flex";
+}
+event.target.value="";
+};
+image.src=reader.result;
+};
+reader.readAsDataURL(file);
 }
 function addProduct(){
 let name=newName.value.trim(),price=Number(newPrice.value),
 emoji=newEmoji.value.trim()||"📦",desc=newDesc.value.trim();
 if(!name||!Number.isFinite(price)||price<=0||!desc){alert("Enter valid product details.");return}
-products.push({id:Date.now(),name,price,emoji,desc});
+products.push({id:Date.now(),name,price,emoji,desc,photo:newProductPhoto||""});
+newProductPhoto="";newPhotoPreview.innerHTML="";newPhotoPreview.style.display="none";newPhoto.value="";
 save();newName.value="";newPrice.value="";newEmoji.value="";newDesc.value="";
 renderSeller();renderProducts();alert("Product added!");
 }
@@ -644,14 +740,28 @@ let p=products.find(x=>x.id===id);if(!p||!confirm("Delete "+p.name+"?"))return;
 products=products.filter(x=>x.id!==id);cart=cart.filter(x=>x.id!==id);
 save();renderSeller();renderProducts();updateCart();
 }
+function restoreDefaultProducts(){
+if(!confirm("Restore the original collectibles? This replaces the current product catalog."))return;
+products=defaultProducts.map(product=>({...product}));
+save();renderSeller();renderProducts();updateCart();
+alert("The default collectibles have been restored.");
+}
 function updateSellerOrder(id){
 let o=orders.find(x=>x.id===id);if(!o)return;
 let status=document.getElementById("status-"+id).value;
-o.status=status;notifications.unshift({buyer:o.buyer,text:"Your order "+id+" is now "+status});
+if(o.status!==status)notifications.unshift({buyer:o.buyer,text:"Your order "+id+" is now "+status});
+o.status=status;
 save();renderSeller();alert("Order updated!");
 }
 
 // START
+window.addEventListener("storage",event=>{
+if(!event.key)return;
+if(event.key==="rrProducts"){products=JSON.parse(event.newValue||"[]");renderProducts();if(document.getElementById("seller").classList.contains("active"))renderSeller()}
+if(event.key==="rrMessages"){messages=JSON.parse(event.newValue||"[]");if(user&&document.getElementById("messages").classList.contains("active"))renderChat();if(document.getElementById("seller").classList.contains("active"))renderSellerMessages()}
+if(event.key==="rrOrders"){orders=JSON.parse(event.newValue||"[]");if(document.getElementById("seller").classList.contains("active"))renderSeller()}
+if(event.key==="rrNotifications"){notifications=JSON.parse(event.newValue||"[]");if(user&&document.getElementById("notifications").classList.contains("active"))renderNotifications()}
+});
 if(user){enterApp()}
 </script>
 </body>
