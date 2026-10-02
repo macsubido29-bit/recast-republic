@@ -1,6 +1,0 @@
-node_modules/
-.env
-npm-debug.log*
-data/*.sqlite
-data/*.sqlite-shm
-data/*.sqlite-wal
