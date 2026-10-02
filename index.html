@@ -2,7 +2,824 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta charset="UTF-8
+<!DOCTYPE html>
+<html lang="en">
+<head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recast Republic | Armory Collectibles</title>
+<style>
+:root{
+ --black:#100d0e;--panel:#1e191b;--maroon:#650d20;
+ --red:#951c37;--gold:#d5ae68;--white:#f7f2f3;
+ --muted:#b9aaae;--line:#493038;--bg:#151113;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:var(--bg);color:var(--white)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+header{background:var(--black);border-bottom:2px solid var(--maroon);
+ position:sticky;top:0;z-index:10;padding:12px 16px;
+ display:flex;align-items:center;gap:14px}
+.logo{font-size:19px;font-weight:bold;color:var(--gold);white-space:nowrap}
+.search{display:flex;flex:1;max-width:550px}
+.search input{margin:0;border-radius:6px 0 0 6px}
+.search button{background:var(--maroon);color:white;padding:0 16px;border-radius:0 6px 6px 0}
+.search .clear-search{background:#302629;border-left:1px solid var(--line);border-radius:0}
+.iconbtn{background:none;color:white;font-size:22px}
+main{max-width:1100px;margin:auto;padding:16px 12px 95px}
+.page{display:none}.page.active{display:block}
+h2{font-size:22px;margin:12px 0 17px}
+h3{font-size:16px;margin-bottom:12px}
+p{margin:6px 0;line-height:1.5}
+.small{font-size:12px;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);
+ border-radius:10px;padding:16px;margin:12px 0}
+.btn{background:var(--maroon);color:white;border:1px solid #8d3047;
+ padding:11px 15px;border-radius:6px;margin:3px}
+.btn.gold{background:var(--red);border-color:#b94b62;color:white}
+.btn.light{background:#302629;color:white;border-color:#593942}
+.btn.red{background:#75152b;color:white}
+.btn.link{display:inline-block;text-decoration:none}
+.btn:active{transform:scale(.98)}
+input,select,textarea{width:100%;padding:11px;margin:6px 0 13px;
+ background:#151113;border:1px solid #593942;border-radius:6px;color:white}
+input::placeholder,textarea::placeholder{color:#a99ba0}
+label{font-size:13px;font-weight:bold}
+.banner{padding:28px 20px;border-radius:12px;margin:12px 0 22px;
+ background:linear-gradient(120deg,#080808,#390c1b,#70152b);
+ border:1px solid #84263d}
+.banner h2{font-size:27px;color:var(--gold)}
+.products{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.product{display:flex;flex-direction:column;overflow:hidden;background:var(--panel);
+ border:1px solid var(--line);border-radius:9px}
+.photo{height:150px;background:#302629;display:flex;align-items:center;
+ justify-content:center;font-size:55px}
+.photo img{width:100%;height:100%;object-fit:cover}
+.info{padding:11px;display:flex;flex-direction:column;flex:1}
+.info h3{font-size:14px;line-height:1.4}
+.price{color:var(--gold);font-weight:bold;margin:7px 0}
+.info .btn{font-size:12px;padding:9px 3px}
+.info button:last-child{margin-top:auto}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.avatar{width:65px;height:65px;flex-shrink:0;border-radius:50%;
+ background:#302629;display:flex;align-items:center;justify-content:center;
+ font-size:28px;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.account-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.account-grid button{padding:15px 3px;background:#292124;color:white;
+ border:1px solid var(--line);border-radius:8px}
+.account-grid span{display:block;font-size:24px;margin-bottom:7px}
+.account-grid small{font-size:12px}
+.nav{position:fixed;bottom:0;left:0;width:100%;z-index:12;
+ display:flex;justify-content:space-around;background:#0b090a;
+ border-top:2px solid var(--maroon);padding:8px 0 max(8px,env(safe-area-inset-bottom))}
+.nav button{background:none;color:var(--muted);font-size:12px;
+ display:flex;flex-direction:column;align-items:center;gap:3px}
+.nav button span{font-size:21px}
+.nav button.active{color:var(--gold);font-weight:bold}
+.back{background:none;color:var(--gold);padding:8px 0;font-weight:bold}
+hr{border:0;border-top:1px solid var(--line);margin:12px 0}
+.order{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.order .emoji{font-size:34px}
+.order .details{flex:1;min-width:0}
+.pill{display:inline-block;padding:5px 9px;border-radius:15px;
+ background:#4c1927;color:#f4c5d0;font-size:12px}
+.empty{text-align:center;color:var(--muted);padding:30px 10px}
+.modal{display:none;position:fixed;inset:0;background:#000c;z-index:20;
+ align-items:center;justify-content:center;padding:12px}
+.modal.show{display:flex}
+.modalbox{background:var(--panel);border:1px solid var(--line);
+ padding:20px;border-radius:12px;width:100%;max-width:460px;
+ max-height:90vh;overflow:auto}
+.close{float:right;background:none;color:white;font-size:23px}
+.seller-heading{background:linear-gradient(120deg,#080808,#4b0b1d);
+ border:1px solid #8b233b;padding:20px;border-radius:12px}
+.seller-product{background:#292124;padding:12px;border:1px solid var(--line);
+ border-radius:8px;margin:10px 0}
+@media(max-width:700px){
+ header{flex-wrap:wrap;gap:9px}
+ .logo{font-size:16px}
+ .search{order:3;flex-basis:100%;max-width:none}
+ .products{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .photo{height:125px}
+ main{padding:10px 9px 90px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<section id="login" class="page active">
+<div class="card" style="max-width:420px;margin:45px auto;padding:24px">
+<div class="logo" style="text-align:center;font-size:25px">RECAST REPUBLIC</div>
+<p class="small" style="text-align:center">ARMORY COLLECTIBLES</p>
+<hr>
+<div id="loginForm">
+<h2 style="text-align:center">Buyer Login</h2>
+<label>Email</label><input id="loginEmail" type="email" placeholder="Email address">
+<label>Password</label><input id="loginPassword" type="password" placeholder="Password">
+<button class="btn gold" style="width:100%" onclick="login()">Login</button>
+<p style="text-align:center">No account? <a href="#" onclick="showRegister()" style="color:#d5ae68">Register</a></p>
+</div>
+<div id="registerForm" style="display:none">
+<h2>Create Buyer Account</h2>
+<label>Full Name</label><input id="regName" placeholder="Full name">
+<label>Email</label><input id="regEmail" type="email" placeholder="Email address">
+<label>Password</label><input id="regPassword" type="password" placeholder="Password">
+<button class="btn gold" style="width:100%" onclick="register()">Create Account</button>
+<p style="text-align:center"><a href="#" onclick="showLogin()" style="color:#d5ae68">Back to Login</a></p>
+</div>
+<p class="small" style="text-align:center;margin-top:15px">Demo only. No real authentication or online payment.</p>
+<p style="text-align:center;margin-top:12px"><a href="#" onclick="showPublicCatalog();return false" style="color:#d5ae68">Continue browsing as a visitor</a></p>
+</div>
+</section>
+
+<header id="header" style="display:none">
+<div class="logo">RECAST REPUBLIC</div>
+<form class="search" onsubmit="event.preventDefault();renderProducts()">
+<input id="search" type="search" placeholder="Search collectibles..." aria-label="Search collectibles" oninput="renderProducts()">
+<button type="submit" aria-label="Search">🔍</button>
+<button class="clear-search" type="button" aria-label="Clear search" onclick="clearSearch()">✕</button>
+</form>
+<button id="cartButton" class="iconbtn" onclick="openPage('cart')">🛒<sup id="cartCount">0</sup></button>
+</header>
+
+<main id="app" style="display:none">
+<!-- HOME -->
+<section id="home" class="page">
+<div class="banner">
+<p>WELCOME TO</p><h2>RECAST REPUBLIC</h2>
+<p>Collectibles, figures, miniatures and more. Visitors can browse all listings.</p>
+<div id="visitorActions">
+<button class="btn gold" onclick="showAuth()">Buyer Login</button>
+<button class="btn light" onclick="showAuth();showRegister()">Register</button>
+</div>
+<button id="buyerShopButton" class="btn gold" style="display:none" onclick="document.getElementById('catalog').scrollIntoView({behavior:'smooth'})">Shop Now</button>
+</div>
+<h2 id="catalog">All Collectibles</h2>
+<div class="products" id="productList"></div>
+</section>
+
+<!-- CART -->
+<section id="cart" class="page">
+<button class="back" onclick="openPage('home')">← Continue Shopping</button>
+<h2>🛒 My Cart</h2>
+<div class="card" id="cartItems"></div>
+<div class="card">
+<div class="row"><span>Subtotal</span><b id="subtotal">₱0</b></div>
+<hr><button class="btn gold" style="width:100%" onclick="checkout()">Proceed to Checkout</button>
+</div>
+</section>
+
+<!-- MESSAGES -->
+<section id="messages" class="page">
+<h2>💬 Messages</h2>
+<div class="card">
+<b>Recast Republic Support</b><p class="small">Messages are saved in this browser. Replies from the seller appear here.</p><hr>
+<div id="chatLog" style="height:300px;overflow:auto"></div>
+<form class="row" onsubmit="event.preventDefault();sendMessage()">
+<input id="chatInput" placeholder="Type a message..." style="margin:0">
+<button class="btn gold" type="submit">Send</button>
+</form>
+</div>
+</section>
+
+<!-- NOTIFICATIONS -->
+<section id="notifications" class="page">
+<h2>🔔 Notifications</h2>
+<div class="card" id="notificationList"></div>
+</section>
+
+<!-- BUYER ACCOUNT -->
+<section id="me" class="page">
+<div class="card">
+<div class="row">
+<div class="row" style="justify-content:flex-start">
+<div class="avatar" id="accountAvatar">👤</div>
+<div><b id="accountName">Buyer</b><p class="small" id="accountEmail"></p>
+<button class="back" onclick="openPage('profile')">Edit Profile ›</button></div>
+</div>
+<div><button class="btn light" onclick="openPage('settings')">⚙️</button>
+<button class="btn light" onclick="openPage('messages')">💬</button></div>
+</div>
+</div>
+<div class="card">
+<div class="row"><h3>My Orders</h3><button class="back" onclick="openPage('history')">View All ›</button></div>
+<div class="account-grid">
+<button onclick="openOrders('To Ship')"><span>📦</span><small>To Ship</small></button>
+<button onclick="openOrders('To Receive')"><span>🚚</span><small>To Receive</small></button>
+<button onclick="openPage('history')"><span>📋</span><small>History</small></button>
+</div>
+</div>
+<div class="card">
+<h3>My Services</h3>
+<div class="account-grid">
+<button onclick="openPage('address')"><span>📍</span><small>My Address</small></button>
+<button onclick="openPage('messages')"><span>💬</span><small>Messages</small></button>
+<button onclick="openPage('help')"><span>🤖</span><small>Help Center</small></button>
+</div>
+</div>
+<div class="card">
+<button class="btn light" style="width:100%" onclick="openPage('settings')">⚙️ Settings</button>
+<button class="btn red" style="width:100%" onclick="logout()">Logout</button>
+</div>
+</section>
+
+<!-- PROFILE -->
+<section id="profile" class="page">
+<button class="back" onclick="openPage('me')">← My Account</button>
+<h2>Edit Profile</h2>
+<div class="card">
+<div style="text-align:center">
+<div class="avatar" id="profileAvatar" style="width:90px;height:90px;margin:auto">👤</div>
+<label class="btn light" style="display:inline-block;margin:12px">Change PFP
+<input type="file" id="pfpInput" accept="image/*" style="display:none" onchange="changePfp(event)">
+</label></div>
+<label>Name</label><input id="pName">
+<label>Gender</label><select id="pGender"><option value="">Select</option><option>Male</option><option>Female</option><option>Prefer not to say</option></select>
+<label>Birthday</label><input id="pBirthday" type="date">
+<label>Phone</label><input id="pPhone" type="tel">
+<label>Email Address</label><input id="pEmail" type="email" readonly>
+<label>Address</label><textarea id="pAddress"></textarea>
+<button class="btn gold" style="width:100%" onclick="saveProfile()">Save Changes</button>
+</div>
+</section>
+
+<!-- SETTINGS -->
+<section id="settings" class="page">
+<button class="back" onclick="openPage('me')">← My Account</button>
+<h2>⚙️ Settings</h2>
+<div class="card">
+<button class="row" style="width:100%;background:none;color:white;padding:10px 0" onclick="openPage('address')">📍 My Address <span>›</span></button><hr>
+<button class="row" style="width:100%;background:none;color:white;padding:10px 0" onclick="openPage('profile')">👤 Account Details <span>›</span></button><hr>
+<button class="row" style="width:100%;background:none;color:white;padding:10px 0" onclick="openPage('help')">🤖 Help Center <span>›</span></button>
+</div>
+<div class="card">
+<h3>🛡️ Seller Center</h3>
+<p class="small">Authorized seller access to manage products and orders.</p>
+<button class="btn gold" style="width:100%" onclick="sellerLogin()">Enter Seller Mode</button>
+</div>
+<div class="card"><button class="btn red" style="width:100%" onclick="logout()">Logout</button></div>
+<div class="card"><button class="btn light" style="width:100%" onclick="switchAccount()">Switch Account / Register Another</button></div>
+</section>
+
+<!-- ADDRESS -->
+<section id="address" class="page">
+<button class="back" onclick="openPage('me')">← My Account</button>
+<h2>📍 My Address</h2>
+<div class="card">
+<label>Recipient Name</label><input id="aName">
+<label>Phone Number</label><input id="aPhone">
+<label>House No. / Street</label><input id="aStreet">
+<label>City / Municipality</label><input id="aCity">
+<label>Province</label><input id="aProvince">
+<label>Postal Code</label><input id="aZip">
+<button class="btn gold" style="width:100%" onclick="saveAddress()">Save Address</button>
+</div>
+</section>
+
+<!-- ORDER HISTORY -->
+<section id="history" class="page">
+<button class="back" onclick="openPage('me')">← My Account</button>
+<h2>📋 Order History</h2><div id="historyList"></div>
+</section>
+<section id="orders" class="page">
+<button class="back" onclick="openPage('me')">← My Account</button>
+<h2 id="ordersTitle">My Orders</h2><div id="ordersList"></div>
+</section>
+
+<!-- HELP -->
+<section id="help" class="page">
+<button class="back" onclick="openPage('me')">← My Account</button>
+<h2>🤖 AI Help Center</h2>
+<div class="card">
+<p class="small">Automated demo assistant. It is not connected to a live AI service.</p>
+<div id="aiLog" style="min-height:160px;padding:10px">Hello! Ask me about products, orders, or your account.</div>
+<input id="aiInput" placeholder="Ask a question..." onkeydown="if(event.key==='Enter')askAI()">
+<button class="btn gold" style="width:100%" onclick="askAI()">Send</button>
+</div>
+<div class="card"><h3>Frequently Asked Questions</h3>
+<p><b>How to order?</b></p><p class="small">Add products to your cart and checkout.</p><hr>
+<p><b>Where are my orders?</b></p><p class="small">Open My Account and choose History.</p><hr>
+<p><b>How to change address?</b></p><p class="small">Open My Address in your account.</p>
+</div>
+</section>
+
+<!-- SELLER DASHBOARD -->
+<section id="seller" class="page">
+<button class="back" onclick="openPage('settings')">← Settings</button>
+<div class="seller-heading">
+<p style="color:var(--gold)">RECAST REPUBLIC / ADMIN</p>
+<h2>🛡️ Seller Center</h2><p class="small">Store management dashboard</p>
+</div>
+<div class="account-grid" style="margin:12px 0">
+<div class="card"><span>📦</span><h3 id="sellerProductCount">0</h3><small>Products</small></div>
+<div class="card"><span>🛒</span><h3 id="sellerOrderCount">0</h3><small>Orders</small></div>
+<div class="card"><span>💰</span><h3 id="sellerSales">₱0</h3><small>Order Total</small></div>
+</div>
+<div class="card">
+<h3>➕ Add New Product</h3>
+<label>Product Name</label><input id="newName" placeholder="Product name">
+<label>Price (₱)</label><input id="newPrice" type="number" min="1" placeholder="Price">
+<label>Emoji / Icon</label><input id="newEmoji" placeholder="e.g. 🤖">
+<label>Description</label><textarea id="newDesc" placeholder="Product details"></textarea>
+<label>Product Photo (optional)</label><input id="newPhoto" type="file" accept="image/*" onchange="handleProductPhoto(event)">
+<div id="newPhotoPreview" class="photo" style="display:none;height:120px;margin:0 0 12px;border-radius:6px"></div>
+<button class="btn gold" style="width:100%" onclick="addProduct()">Add Product</button>
+</div>
+<div class="card"><h3>📦 Manage Products</h3><div id="sellerProductList"></div></div>
+<div class="card"><h3>♻️ Restore Armory</h3><p class="small">Restore the original Recast Republic collectibles if the catalog was cleared.</p><button class="btn light" style="width:100%" onclick="restoreDefaultProducts()">Restore Default Collectibles</button></div>
+<div class="card"><h3>🧾 Customer Orders</h3><div id="sellerOrders"></div></div>
+<div class="card"><h3>💬 Customer Messages</h3><p class="small">Reply here in the app, or open an email to the buyer in your default mail app.</p><div id="sellerMessages"></div></div>
+<button class="btn red" style="width:100%" onclick="openPage('settings')">Exit Seller Mode</button>
+</section>
+</main>
+
+<nav id="nav" class="nav" style="display:none">
+<button id="nav-home" class="active" onclick="openPage('home')"><span>🏠</span>Home</button>
+<button id="nav-messages" onclick="openPage('messages')"><span>💬</span>Message</button>
+<button id="nav-notifications" onclick="openPage('notifications')"><span>🔔</span>Notice</button>
+<button id="nav-me" onclick="openPage('me')"><span>👤</span>Me</button>
+</nav>
+
+<div class="modal" id="productModal"><div class="modalbox">
+<button class="close" onclick="closeModal('productModal')">✕</button>
+<div id="modalContent"></div>
+</div></div>
+<div class="modal" id="checkoutModal"><div class="modalbox">
+<button class="close" onclick="closeModal('checkoutModal')">✕</button>
+<h2>Checkout</h2><div id="checkoutSummary"></div>
+<label>Delivery Address</label><textarea id="checkoutAddress"></textarea>
+<label>Payment Method</label><select id="payment"><option>Cash on Delivery</option><option>GCash (Demo)</option><option>Bank Transfer (Demo)</option></select>
+<button class="btn gold" style="width:100%" onclick="placeOrder()">Place Order</button>
+</div></div>
+<input id="editPhotoInput" type="file" accept="image/*" style="display:none" onchange="handleProductPhoto(event)">
+
+<script src="supabase-config.js"></script>
+<script>
+// DATA
+const defaultProducts=[
+{id:1,name:"Anime Action Figure",price:850,emoji:"🦸",desc:"Anime-inspired action figure for display."},
+{id:2,name:"Miniature Wooden Cabinet",price:450,emoji:"🗄️",desc:"Miniature cabinet for 1:12 scale dioramas."},
+{id:3,name:"Chibi Character Figure",price:550,emoji:"👾",desc:"Cute chibi-style collectible."},
+{id:4,name:"Miniature School Desk",price:350,emoji:"🪑",desc:"Detailed miniature school desk."},
+{id:5,name:"Fantasy Warrior Figure",price:1200,emoji:"⚔️",desc:"Fantasy collectible display figure."},
+{id:6,name:"Miniature Room Set",price:1500,emoji:"🏠",desc:"Miniature room for dioramas."},
+{id:7,name:"Robot Collectible",price:950,emoji:"🤖",desc:"Robot-inspired display figure."},
+{id:8,name:"Custom Display Stand",price:250,emoji:"🎁",desc:"Stand for your favorite figures."}
+];
+let products=JSON.parse(localStorage.getItem("rrProducts")||"null");
+if(!Array.isArray(products)||products.length===0){
+products=defaultProducts.map(product=>({...product}));
+localStorage.setItem("rrProducts",JSON.stringify(products));
+}
+let users=JSON.parse(localStorage.getItem("rrUsers")||"{}");
+let user=JSON.parse(localStorage.getItem("rrCurrentUser")||"null");
+let cart=JSON.parse(localStorage.getItem("rrCart")||"[]");
+let orders=JSON.parse(localStorage.getItem("rrOrders")||"[]");
+let notifications=JSON.parse(localStorage.getItem("rrNotifications")||"[]");
+let profiles=JSON.parse(localStorage.getItem("rrProfiles")||"{}");
+let addresses=JSON.parse(localStorage.getItem("rrAddresses")||"{}");
+let messages=JSON.parse(localStorage.getItem("rrMessages")||"[]");
+let currentProduct=null;
+let newProductPhoto="";
+
+// SECURITY NOTE: Demo PIN only, not real authorization.
+const SELLER_PIN="seller123";
+const ADMIN_EMAIL="recastrepublic29@gmail.com";
+function key(){return user?.email?.toLowerCase()||"guest"}
+function save(){
+localStorage.setItem("rrProducts",JSON.stringify(products));
+localStorage.setItem("rrUsers",JSON.stringify(users));
+localStorage.setItem("rrCurrentUser",JSON.stringify(user));
+localStorage.setItem("rrCart",JSON.stringify(cart));
+localStorage.setItem("rrOrders",JSON.stringify(orders));
+localStorage.setItem("rrNotifications",JSON.stringify(notifications));
+localStorage.setItem("rrProfiles",JSON.stringify(profiles));
+localStorage.setItem("rrAddresses",JSON.stringify(addresses));
+localStorage.setItem("rrMessages",JSON.stringify(messages));
+if(user)localStorage.setItem("rrCart_"+key(),JSON.stringify(cart));
+}
+function profile(){return profiles[key()]||{}}
+function address(){return addresses[key()]||{}}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function money(n){return "₱"+Number(n).toLocaleString("en-PH")}
+
+// AUTH
+function showRegister(){loginForm.style.display="none";registerForm.style.display="block"}
+function showLogin(){loginForm.style.display="block";registerForm.style.display="none"}
+function showAuth(){
+document.getElementById("login").classList.add("active");
+header.style.display="none";app.style.display="none";nav.style.display="none";
+showLogin();
+window.scrollTo(0,0);
+}
+function showPublicCatalog(){
+document.getElementById("login").classList.remove("active");
+header.style.display="flex";app.style.display="block";nav.style.display="none";
+cartButton.style.display="none";
+document.querySelectorAll("main .page").forEach(page=>page.classList.remove("active"));
+document.getElementById("home").classList.add("active");
+visitorActions.style.display="block";buyerShopButton.style.display="none";
+renderProducts();window.scrollTo(0,0);
+}
+function register(){
+let name=regName.value.trim(),email=regEmail.value.trim().toLowerCase(),pass=regPassword.value;
+if(!name||!email.includes("@")||pass.length<4){alert("Enter your name, valid email and a password of at least 4 characters.");return}
+if(users[email]){alert("Account already exists. Please login.");return}
+users[email]={name,password:pass};
+profiles[email]={name,email};
+user={name,email};
+cart=[];save();enterApp();
+}
+function login(){
+let email=loginEmail.value.trim().toLowerCase(),pass=loginPassword.value;
+if(!email.includes("@")||!pass){alert("Enter valid login details.");return}
+if(users[email]&&users[email].password!==pass){alert("Incorrect password.");return}
+if(!users[email]){alert("No account found. Please register first.");return}
+user={name:users[email].name,email};
+cart=JSON.parse(localStorage.getItem("rrCart_"+email)||"[]");
+save();enterApp();
+}
+function enterApp(){
+document.getElementById("login").classList.remove("active");header.style.display="flex";
+app.style.display="block";nav.style.display="flex";
+cartButton.style.display="block";
+visitorActions.style.display="none";buyerShopButton.style.display="inline-block";
+renderProducts();updateAccount();updateCart();openPage("home");
+}
+function logout(){
+if(!confirm("Logout from Recast Republic?"))return;
+endSession();
+}
+function switchAccount(){endSession()}
+function endSession(){
+if(user)localStorage.setItem("rrCart_"+key(),JSON.stringify(cart));
+user=null;localStorage.setItem("rrCurrentUser","null");
+loginEmail.value="";loginPassword.value="";
+regName.value="";regEmail.value="";regPassword.value="";
+header.style.display="none";app.style.display="none";nav.style.display="none";
+document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+document.getElementById("login").classList.add("active");showLogin();
+showPublicCatalog();
+}
+
+// NAVIGATION
+function openPage(id){
+if(!user&&id!=="home"){showAuth();return}
+document.querySelectorAll("main .page").forEach(p=>p.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
+let b=document.getElementById("nav-"+id);if(b)b.classList.add("active");
+if(id==="me")updateAccount();
+if(id==="cart")updateCart();
+if(id==="profile")loadProfile();
+if(id==="address")loadAddress();
+if(id==="history")renderHistory();
+if(id==="notifications")renderNotifications();
+if(id==="seller")renderSeller();
+if(id==="messages")renderChat();
+window.scrollTo(0,0);
+}
+
+// PRODUCTS
+function clearSearch(){
+document.getElementById("search").value="";
+renderProducts();
+document.getElementById("search").focus();
+}
+function renderProducts(){
+let q=(document.getElementById("search")?.value||"").trim().toLowerCase();
+let list=products.filter(p=>(p.name+" "+p.desc+" "+p.emoji).toLowerCase().includes(q));
+productList.innerHTML=list.length?list.map(p=>`
+<div class="product"><div class="photo">${p.photo?`<img src="${esc(p.photo)}" alt="${esc(p.name)}">`:esc(p.emoji)}</div>
+<div class="info"><h3>${esc(p.name)}</h3><div class="price">${money(p.price)}</div>
+${user?`
+<button class="btn light" onclick="showDetails(${p.id})">View Details</button>
+<button class="btn gold" onclick="addToCart(${p.id})">🛒 Add to Cart</button>`:""}
+</div></div>`).join(""):'<p class="empty">No products found.</p>';
+}
+function showDetails(id){
+if(!user){showAuth();return}
+let p=products.find(x=>x.id===id);if(!p)return;currentProduct=p;
+modalContent.innerHTML=`<div class="photo" style="height:220px;border-radius:8px;margin:12px 0">${p.photo?`<img src="${esc(p.photo)}" alt="${esc(p.name)}">`:esc(p.emoji)}</div>
+<h2>${esc(p.name)}</h2><p class="price">${money(p.price)}</p><p>${esc(p.desc)}</p>
+<label>Quantity</label><input id="detailQty" type="number" min="1" max="99" value="1">
+<button class="btn gold" style="width:100%" onclick="addToCart(${p.id},Number(detailQty.value));closeModal('productModal')">Add to Cart</button>`;
+openModal("productModal");
+}
+function openModal(id){document.getElementById(id).classList.add("show")}
+function closeModal(id){document.getElementById(id).classList.remove("show")}
+function addToCart(id,qty=1){
+if(!user){showAuth();return}
+qty=Math.floor(Number(qty));if(!Number.isFinite(qty)||qty<1||qty>99){alert("Quantity must be 1–99.");return}
+let p=products.find(x=>x.id===id);if(!p)return;
+let item=cart.find(x=>x.id===id);
+if(item)item.qty+=qty;else cart.push({id,qty});
+save();updateCart();alert("Added to cart!");
+}
+
+// CART & CHECKOUT
+function updateCart(){
+cart=cart.filter(i=>products.some(p=>p.id===i.id));
+let count=cart.reduce((n,i)=>n+i.qty,0);cartCount.textContent=count;
+let total=0;
+cartItems.innerHTML=cart.map(i=>{
+let p=products.find(x=>x.id===i.id);total+=p.price*i.qty;
+return `<div class="order"><div class="emoji">${esc(p.emoji)}</div>
+<div class="details"><b>${esc(p.name)}</b><p class="price">${money(p.price)}</p>
+<div class="row" style="justify-content:flex-start">
+<button class="btn light" onclick="changeQty(${p.id},-1)">−</button><span>${i.qty}</span>
+<button class="btn light" onclick="changeQty(${p.id},1)">+</button>
+<button class="btn red" onclick="removeItem(${p.id})">Remove</button></div></div></div>`;
+}).join("")||'<p class="empty">Your cart is empty.</p>';
+subtotal.textContent=money(total);save();
+}
+function changeQty(id,d){
+let i=cart.find(x=>x.id===id);if(!i)return;i.qty+=d;
+if(i.qty<=0)cart=cart.filter(x=>x.id!==id);save();updateCart();
+}
+function removeItem(id){cart=cart.filter(x=>x.id!==id);save();updateCart()}
+function checkout(){
+if(!cart.length){alert("Your cart is empty.");return}
+let a=address();checkoutAddress.value=a.full||"";
+let total=cart.reduce((s,i)=>s+products.find(p=>p.id===i.id).price*i.qty,0);
+checkoutSummary.innerHTML=cart.map(i=>{let p=products.find(x=>x.id===i.id);return `<p>${esc(p.emoji)} ${esc(p.name)} × ${i.qty} — ${money(p.price*i.qty)}</p>`}).join("")+
+`<hr><b>Total: ${money(total)}</b>`;
+openModal("checkoutModal");
+}
+function placeOrder(){
+let delivery=checkoutAddress.value.trim();if(!delivery){alert("Enter your delivery address.");return}
+let items=cart.map(i=>({...i}));
+let total=items.reduce((s,i)=>s+products.find(p=>p.id===i.id).price*i.qty,0);
+let o={id:"RR"+Date.now().toString().slice(-8),buyer:user.email.toLowerCase(),
+buyerName:profile().name||user.name,items,total,address:delivery,
+payment:payment.value,status:"To Ship",date:new Date().toLocaleString()};
+orders.unshift(o);notifications.unshift({buyer:o.buyer,text:"Order "+o.id+" placed successfully."});
+cart=[];save();closeModal("checkoutModal");updateCart();openPage("history");
+}
+
+// ORDERS
+function orderHTML(o){
+return `<div class="card"><div class="row"><b>Order #${esc(o.id)}</b><span class="pill">${esc(o.status)}</span></div>
+<p class="small">${esc(o.date)}</p><hr>
+${o.items.map(i=>{let p=products.find(x=>x.id===i.id);return `<div class="order"><span class="emoji">${p?.photo?`<img src="${esc(p.photo)}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:5px">`:esc(p?.emoji||"📦")}</span><div class="details">${esc(p?.name||"Item")} × ${i.qty}</div></div>`}).join("")}
+<p class="small">Payment: ${esc(o.payment)}</p><p class="small">Address: ${esc(o.address)}</p>
+<div class="row"><b>Total: ${money(o.total)}</b>
+${o.status==="To Ship"?'<button class="btn red" onclick="cancelOrder(\''+esc(o.id)+'\')">Cancel Order</button>':o.status==="To Receive"?'<button class="btn gold" onclick="buyerReceived(\''+esc(o.id)+'\')">Received</button>':o.status==="Cancelled"?'<span class="small">This order was cancelled.</span>':'<span class="pill">Completed</span>'}
+<a class="btn light link" href="${adminOrderEmailLink(o)}">Email Admin</a></div></div>`;
+}
+function adminOrderEmailLink(order){
+let subject="Question about Recast Republic order "+order.id;
+let body=[
+`Order: ${order.id}`,
+`Status: ${order.status}`,
+`Total: ${money(order.total)}`,
+`Order date: ${order.date}`,
+`Buyer: ${user.email}`,
+"",
+"Please help me with this order."
+].join("\n");
+return `mailto:${ADMIN_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+function buyerOrders(){return orders.filter(o=>o.buyer?.toLowerCase()===user.email.toLowerCase())}
+function renderHistory(){historyList.innerHTML=buyerOrders().map(orderHTML).join("")||'<div class="card empty">No orders yet.</div>'}
+function openOrders(status){
+ordersList.innerHTML=buyerOrders().filter(o=>o.status===status).map(orderHTML).join("")||'<div class="card empty">No orders here yet.</div>';
+ordersTitle.textContent=status;openPage("orders");
+}
+function buyerReceived(id){
+let o=orders.find(x=>x.id===id&&x.buyer?.toLowerCase()===user.email.toLowerCase());if(!o)return;
+o.status="Completed";notifications.unshift({buyer:o.buyer,text:"Order "+id+" completed."});
+save();renderHistory();openOrders("To Receive");
+}
+function cancelOrder(id){
+let o=orders.find(x=>x.id===id&&x.buyer?.toLowerCase()===user.email.toLowerCase());
+if(!o||o.status!=="To Ship"){alert("Only orders awaiting shipment can be cancelled.");return}
+if(!confirm("Cancel order "+id+"?"))return;
+o.status="Cancelled";notifications.unshift({buyer:o.buyer,text:"Order "+id+" was cancelled."});
+save();renderHistory();renderSeller();
+}
+
+// ACCOUNT
+function updateAccount(){
+let p=profile();accountName.textContent=p.name||user.name;
+accountEmail.textContent=p.email||user.email;
+accountAvatar.innerHTML=p.pfp?`<img src="${p.pfp}">`:"👤";
+}
+function loadProfile(){
+let p=profile();
+pName.value=p.name||user.name;pGender.value=p.gender||"";
+pBirthday.value=p.birthday||"";pPhone.value=p.phone||"";
+pEmail.value=p.email||user.email;pAddress.value=p.address||"";
+profileAvatar.innerHTML=p.pfp?`<img src="${p.pfp}">`:"👤";
+}
+function saveProfile(){
+let p={...profile(),name:pName.value.trim(),gender:pGender.value,
+birthday:pBirthday.value,phone:pPhone.value.trim(),
+email:pEmail.value.trim(),address:pAddress.value.trim()};
+if(!p.name||p.email.toLowerCase()!==user.email.toLowerCase()){alert("Enter a valid name. To change your login email, use your authentication account settings.");return}
+profiles[key()]=p;user.name=p.name;
+if(users[user.email.toLowerCase()])users[user.email.toLowerCase()].name=p.name;
+save();updateAccount();alert("Profile saved!");openPage("me");
+}
+function changePfp(e){
+let file=e.target.files[0];if(!file)return;
+if(!file.type.startsWith("image/")||file.size>500000){alert("Choose an image under 500KB.");return}
+let reader=new FileReader();reader.onload=()=>{
+profiles[key()]={...profile(),pfp:reader.result};
+profileAvatar.innerHTML=`<img src="${reader.result}">`;
+updateAccount();save();
+};reader.readAsDataURL(file);
+}
+function loadAddress(){
+let a=address();aName.value=a.name||profile().name||user.name;
+aPhone.value=a.phone||profile().phone||"";
+aStreet.value=a.street||"";aCity.value=a.city||"";
+aProvince.value=a.province||"";aZip.value=a.zip||"";
+}
+function saveAddress(){
+let a={name:aName.value.trim(),phone:aPhone.value.trim(),
+street:aStreet.value.trim(),city:aCity.value.trim(),
+province:aProvince.value.trim(),zip:aZip.value.trim()};
+if(!a.street||!a.city){alert("Street and city are required.");return}
+a.full=[a.name,a.phone,a.street,a.city,a.province,a.zip].filter(Boolean).join(", ");
+addresses[key()]=a;save();alert("Address saved!");openPage("me");
+}
+
+// NOTIFICATIONS & CHAT
+function renderNotifications(){
+let mine=notifications.filter(n=>typeof n==="string"||n.buyer?.toLowerCase()===user.email.toLowerCase());
+notificationList.innerHTML=mine.map(n=>`<div style="padding:12px 0;border-bottom:1px solid var(--line)">🔔 ${esc(n.text||n)}</div>`).join("")||'<p class="empty">No notifications yet.</p>';
+}
+function renderChat(){
+let thread=messages.filter(m=>m.buyer?.toLowerCase()===user.email.toLowerCase());
+chatLog.innerHTML=thread.map(m=>`<p style="text-align:${m.sender==="buyer"?"right":"left"};margin:10px 0"><span class="${m.sender==="seller"?"small":""}">${m.sender==="buyer"?"You":"Seller"}: ${esc(m.text)}</span><br><span class="small">${esc(m.date)}</span></p>`).join("")||'<p class="small">Welcome! Send a message to contact the seller.</p>';
+chatLog.scrollTop=chatLog.scrollHeight;
+}
+function sendMessage(){
+let msg=chatInput.value.trim();if(!msg)return;
+messages.push({buyer:user.email.toLowerCase(),sender:"buyer",text:msg,date:new Date().toLocaleString()});
+save();chatInput.value="";renderChat();
+}
+function askAI(){
+let msg=aiInput.value.trim();if(!msg)return;
+let q=msg.toLowerCase(),ans="Please contact store support using Messages for additional help.";
+if(q.includes("order")||q.includes("ship"))ans="Check My Account → To Ship, To Receive, or History for your order status.";
+else if(q.includes("cart")||q.includes("buy"))ans="Choose a product, tap Add to Cart, then open your cart to checkout.";
+else if(q.includes("address"))ans="Go to My Account → My Address to update your delivery details.";
+else if(q.includes("price")||q.includes("product"))ans="You can browse all available items and prices on the Home page.";
+else if(q.includes("hello")||q.includes("hi"))ans="Hello! Welcome to Recast Republic. How can I help?";
+let u=document.createElement("p");u.style.textAlign="right";u.style.margin="10px 0";u.textContent="You: "+msg;
+let r=document.createElement("p");r.style.background="#302629";r.style.padding="10px";r.style.borderRadius="7px";r.textContent="🤖 "+ans;
+aiLog.append(u,r);aiInput.value="";
+}
+
+// SELLER MODE
+function sellerLogin(){
+let pin=prompt("Seller access PIN:");
+if(pin===null)return;
+if(pin!==SELLER_PIN){alert("Access denied.");return}
+openPage("seller");
+}
+function renderSeller(){
+sellerProductCount.textContent=products.length;
+sellerOrderCount.textContent=orders.length;
+sellerSales.textContent=money(orders.reduce((s,o)=>s+o.total,0));
+sellerProductList.innerHTML=products.map(p=>`
+<div class="seller-product"><div class="row"><div>
+<div class="row" style="justify-content:flex-start">${p.photo?`<img src="${esc(p.photo)}" alt="${esc(p.name)}" style="width:64px;height:64px;object-fit:cover;border-radius:6px">`:`<span>${esc(p.emoji)}</span>`}<b>${esc(p.name)}</b></div><p class="price">${money(p.price)}</p>
+<p class="small">${esc(p.desc)}</p></div>
+<div><button class="btn light" onclick="changeProductPhoto(${p.id})">📷 Photo</button>
+<button class="btn gold" onclick="editProduct(${p.id})">✏️ Edit</button>
+<button class="btn red" onclick="deleteProduct(${p.id})">🗑️ Delete</button></div>
+</div></div>`).join("")||'<p class="empty">No products.</p>';
+sellerOrders.innerHTML=orders.map(o=>`
+<div class="seller-product"><b>Order #${esc(o.id)}</b>
+<p class="small">Buyer: ${esc(o.buyerName||o.buyer||"Buyer")}</p>
+<p class="small">Delivery: ${esc(o.address)}</p>
+<p>Total: ${money(o.total)}</p><p>Status: ${esc(o.status)}</p>
+<select id="status-${esc(o.id)}">
+<option ${o.status==="To Ship"?"selected":""}>To Ship</option>
+<option ${o.status==="To Receive"?"selected":""}>To Receive</option>
+<option ${o.status==="Completed"?"selected":""}>Completed</option>
+<option ${o.status==="Cancelled"?"selected":""}>Cancelled</option>
+</select>
+<button class="btn gold" onclick="updateSellerOrder('${esc(o.id)}')">Update Order</button>
+</div>`).join("")||'<p class="empty">No orders yet.</p>';
+renderSellerMessages();
+}
+function messageThreads(){
+let buyers=[...new Set(messages.map(m=>m.buyer?.toLowerCase()).filter(Boolean))];
+return buyers.map(buyer=>({buyer,thread:messages.filter(m=>m.buyer?.toLowerCase()===buyer)}))
+.sort((a,b)=>new Date(b.thread[b.thread.length-1].date)-new Date(a.thread[a.thread.length-1].date));
+}
+function renderSellerMessages(){
+sellerMessages.innerHTML=messageThreads().map((t,i)=>`
+<div class="seller-product"><b>${esc(users[t.buyer]?.name||t.buyer)}</b>
+<div style="max-height:180px;overflow:auto">${t.thread.map(m=>`<p class="small"><b>${m.sender==="buyer"?"Buyer":"Seller"}:</b> ${esc(m.text)}</p>`).join("")}</div>
+<form onsubmit="event.preventDefault();replyToBuyer(${i})">
+<textarea id="sellerReply${i}" placeholder="Reply to this buyer..." required></textarea>
+<button class="btn gold" type="submit">Send Reply</button>
+<a class="btn light" href="mailto:${encodeURIComponent(t.buyer)}?subject=${encodeURIComponent("Recast Republic message")}">Reply by Email</a>
+</form></div>`).join("")||'<p class="empty">No customer messages yet.</p>';
+}
+function replyToBuyer(index){
+let thread=messageThreads()[index],field=document.getElementById("sellerReply"+index);
+if(!thread||!field)return;
+let text=field.value.trim();if(!text)return;
+messages.push({buyer:thread.buyer,sender:"seller",text,date:new Date().toLocaleString()});
+save();renderSellerMessages();
+}
+function changeProductPhoto(id){
+editPhotoInput.dataset.productId=String(id);editPhotoInput.click();
+}
+function handleProductPhoto(event){
+let file=event.target.files[0];if(!file)return;
+if(!file.type.startsWith("image/")){alert("Choose an image file.");event.target.value="";return}
+let productId=event.target.id==="editPhotoInput"?Number(event.target.dataset.productId):null;
+let reader=new FileReader();
+reader.onerror=()=>{alert("The selected photo could not be read. Please try another image.");event.target.value="";};
+reader.onload=()=>{
+let image=new Image();
+image.onerror=()=>{alert("The selected photo is not a valid image.");event.target.value="";};
+image.onload=()=>{
+let scale=Math.min(1,900/Math.max(image.naturalWidth,image.naturalHeight));
+let canvas=document.createElement("canvas");
+canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));
+canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
+let context=canvas.getContext("2d");
+if(!context){alert("Your browser could not process this photo.");event.target.value="";return}
+context.drawImage(image,0,0,canvas.width,canvas.height);
+let photo=canvas.toDataURL("image/jpeg",0.78);
+if(photo.length>350000){alert("This photo is too large to store. Choose a smaller image.");event.target.value="";return}
+if(productId!==null){
+let product=products.find(p=>p.id===productId);
+if(product){product.photo=photo;save();renderSeller();renderProducts()}
+}else{
+newProductPhoto=photo;newPhotoPreview.innerHTML=`<img src="${photo}" alt="New product preview">`;
+newPhotoPreview.style.display="flex";
+}
+event.target.value="";
+};
+image.src=reader.result;
+};
+reader.readAsDataURL(file);
+}
+function addProduct(){
+let name=newName.value.trim(),price=Number(newPrice.value),
+emoji=newEmoji.value.trim()||"📦",desc=newDesc.value.trim();
+if(!name||!Number.isFinite(price)||price<=0||!desc){alert("Enter valid product details.");return}
+products.push({id:Date.now(),name,price,emoji,desc,photo:newProductPhoto||""});
+newProductPhoto="";newPhotoPreview.innerHTML="";newPhotoPreview.style.display="none";newPhoto.value="";
+save();newName.value="";newPrice.value="";newEmoji.value="";newDesc.value="";
+renderSeller();renderProducts();alert("Product added!");
+}
+function editProduct(id){
+let p=products.find(x=>x.id===id);if(!p)return;
+let n=prompt("Product name:",p.name);if(n===null)return;
+let pr=prompt("Price:",p.price);if(pr===null)return;
+let price=Number(pr);if(!n.trim()||!Number.isFinite(price)||price<=0){alert("Invalid details.");return}
+let em=prompt("Emoji:",p.emoji);if(em===null)return;
+let d=prompt("Description:",p.desc);if(d===null)return;
+p.name=n.trim();p.price=price;p.emoji=em.trim()||"📦";p.desc=d.trim();
+save();renderSeller();renderProducts();updateCart();alert("Product updated!");
+}
+function deleteProduct(id){
+let p=products.find(x=>x.id===id);if(!p||!confirm("Delete "+p.name+"?"))return;
+products=products.filter(x=>x.id!==id);cart=cart.filter(x=>x.id!==id);
+save();renderSeller();renderProducts();updateCart();
+}
+function restoreDefaultProducts(){
+if(!confirm("Restore the original collectibles? This replaces the current product catalog."))return;
+products=defaultProducts.map(product=>({...product}));
+save();renderSeller();renderProducts();updateCart();
+alert("The default collectibles have been restored.");
+}
+function updateSellerOrder(id){
+let o=orders.find(x=>x.id===id);if(!o)return;
+let status=document.getElementById("status-"+id).value;
+if(o.status!==status)notifications.unshift({buyer:o.buyer,text:"Your order "+id+" is now "+status});
+o.status=status;
+save();renderSeller();alert("Order updated!");
+}
+
+// START
+window.addEventListener("storage",event=>{
+if(!event.key)return;
+if(event.key==="rrProducts"){products=JSON.parse(event.newValue||"[]");renderProducts();if(document.getElementById("seller").classList.contains("active"))renderSeller()}
+if(event.key==="rrMessages"){messages=JSON.parse(event.newValue||"[]");if(user&&document.getElementById("messages").classList.contains("active"))renderChat();if(document.getElementById("seller").classList.contains("active"))renderSellerMessages()}
+if(event.key==="rrOrders"){orders=JSON.parse(event.newValue||"[]");if(document.getElementById("seller").classList.contains("active"))renderSeller()}
+if(event.key==="rrNotifications"){notifications=JSON.parse(event.newValue||"[]");if(user&&document.getElementById("notifications").classList.contains("active"))renderNotifications()}
+});
+if(user){enterApp()}else{showPublicCatalog()}
+</script>
+</body>
+</html>
+
+">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Recast Republic | Armory Collectibles</title>
 <style>
