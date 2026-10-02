@@ -1,0 +1,121 @@
+
+:root {
+  --dark: #101010;
+  --maroon: #650d20;
+  --crimson: #9f1d37;
+  --gold: #c9a45c;
+  --bg: #171416;
+  --white: #211c1e;
+  --text: #f5eeee;
+  --muted: #b8aeb0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+header {
+  background: #0b0b0b;
+  border-bottom: 2px solid var(--maroon);
+  color: white;
+}
+
+.logo { color: #c9a45c; }
+
+.card, .product, .modalbox {
+  background: #211c1e;
+  color: #f5eeee;
+  border: 1px solid #48202a;
+  box-shadow: 0 4px 14px #0006;
+}
+
+.banner {
+  background: linear-gradient(120deg, #090909, #370b18, #74152c);
+  border: 1px solid #8b233b;
+  color: white;
+}
+
+.banner h2 { color: #d7b16b; }
+
+.btn {
+  background: #650d20;
+  color: white;
+  border: 1px solid #8d2840;
+}
+
+.gold {
+  background: #9f1d37;
+  color: white;
+  border-color: #bd4259;
+}
+
+.light {
+  background: #302629;
+  color: white;
+  border-color: #59313b;
+}
+
+.red {
+  background: #801528;
+  color: white;
+}
+
+input, select, textarea {
+  background: #171416;
+  color: white;
+  border: 1px solid #59313b;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #a89b9f;
+}
+
+.nav {
+  background: #0b0b0b;
+  border-top: 2px solid #650d20;
+}
+
+.nav button { color: #b8aeb0; }
+.nav button.active { color: #d7b16b; }
+
+.photo {
+  background: #302629;
+  color: white;
+}
+
+.price { color: #e2b866; }
+.small { color: #b8aeb0; }
+.back { color: #d7b16b; }
+
+.pill {
+  background: #4b1825;
+  color: #f3c4cc;
+}
+
+hr { border-color: #48202a; }
+
+.account-grid button {
+  background: #211c1e;
+  color: white;
+  border: 1px solid #48202a;
+}
+
+.avatar { background: #302629; color: white; }
+
+.seller-heading {
+  background: linear-gradient(120deg,#080808,#4b0b1d);
+  border: 1px solid #8b233b;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.seller-product {
+  background: #211c1e;
+  padding: 12px;
+  border: 1px solid #48202a;
+  border-radius: 9px;
+  margin: 10px 0;
+}
+
+.seller-product .row { flex-wrap: wrap; }
