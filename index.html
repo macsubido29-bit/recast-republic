@@ -37,6 +37,7 @@ p{margin:6px 0;line-height:1.5}
 .btn.gold{background:var(--red);border-color:#b94b62;color:white}
 .btn.light{background:#302629;color:white;border-color:#593942}
 .btn.red{background:#75152b;color:white}
+.btn.link{display:inline-block;text-decoration:none}
 .btn:active{transform:scale(.98)}
 input,select,textarea{width:100%;padding:11px;margin:6px 0 13px;
  background:#151113;border:1px solid #593942;border-radius:6px;color:white}
@@ -231,7 +232,7 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <label>Gender</label><select id="pGender"><option value="">Select</option><option>Male</option><option>Female</option><option>Prefer not to say</option></select>
 <label>Birthday</label><input id="pBirthday" type="date">
 <label>Phone</label><input id="pPhone" type="tel">
-<label>Email Address</label><input id="pEmail" type="email">
+<label>Email Address</label><input id="pEmail" type="email" readonly>
 <label>Address</label><textarea id="pAddress"></textarea>
 <button class="btn gold" style="width:100%" onclick="saveProfile()">Save Changes</button>
 </div>
@@ -347,6 +348,7 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 </div></div>
 <input id="editPhotoInput" type="file" accept="image/*" style="display:none" onchange="handleProductPhoto(event)">
 
+<script src="supabase-config.js"></script>
 <script>
 // DATA
 const defaultProducts=[
@@ -377,6 +379,7 @@ let newProductPhoto="";
 
 // SECURITY NOTE: Demo PIN only, not real authorization.
 const SELLER_PIN="seller123";
+const ADMIN_EMAIL="recastrepublic29@gmail.com";
 function key(){return user?.email?.toLowerCase()||"guest"}
 function save(){
 localStorage.setItem("rrProducts",JSON.stringify(products));
@@ -429,9 +432,11 @@ function switchAccount(){endSession()}
 function endSession(){
 if(user)localStorage.setItem("rrCart_"+key(),JSON.stringify(cart));
 user=null;localStorage.setItem("rrCurrentUser","null");
+loginEmail.value="";loginPassword.value="";
+regName.value="";regEmail.value="";regPassword.value="";
 header.style.display="none";app.style.display="none";nav.style.display="none";
 document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-login.classList.add("active");showLogin();
+document.getElementById("login").classList.add("active");showLogin();
 }
 
 // NAVIGATION
@@ -531,7 +536,21 @@ return `<div class="card"><div class="row"><b>Order #${esc(o.id)}</b><span class
 ${o.items.map(i=>{let p=products.find(x=>x.id===i.id);return `<div class="order"><span class="emoji">${p?.photo?`<img src="${esc(p.photo)}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:5px">`:esc(p?.emoji||"📦")}</span><div class="details">${esc(p?.name||"Item")} × ${i.qty}</div></div>`}).join("")}
 <p class="small">Payment: ${esc(o.payment)}</p><p class="small">Address: ${esc(o.address)}</p>
 <div class="row"><b>Total: ${money(o.total)}</b>
-${o.status==="To Ship"?'<button class="btn red" onclick="cancelOrder(\''+esc(o.id)+'\')">Cancel Order</button>':o.status==="To Receive"?'<button class="btn gold" onclick="buyerReceived(\''+esc(o.id)+'\')">Received</button>':o.status==="Cancelled"?'<span class="small">This order was cancelled.</span>':'<span class="pill">Completed</span>'}</div></div>`;
+${o.status==="To Ship"?'<button class="btn red" onclick="cancelOrder(\''+esc(o.id)+'\')">Cancel Order</button>':o.status==="To Receive"?'<button class="btn gold" onclick="buyerReceived(\''+esc(o.id)+'\')">Received</button>':o.status==="Cancelled"?'<span class="small">This order was cancelled.</span>':'<span class="pill">Completed</span>'}
+<a class="btn light link" href="${adminOrderEmailLink(o)}">Email Admin</a></div></div>`;
+}
+function adminOrderEmailLink(order){
+let subject="Question about Recast Republic order "+order.id;
+let body=[
+`Order: ${order.id}`,
+`Status: ${order.status}`,
+`Total: ${money(order.total)}`,
+`Order date: ${order.date}`,
+`Buyer: ${user.email}`,
+"",
+"Please help me with this order."
+].join("\n");
+return `mailto:${ADMIN_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 function buyerOrders(){return orders.filter(o=>o.buyer?.toLowerCase()===user.email.toLowerCase())}
 function renderHistory(){historyList.innerHTML=buyerOrders().map(orderHTML).join("")||'<div class="card empty">No orders yet.</div>'}
@@ -569,8 +588,9 @@ function saveProfile(){
 let p={...profile(),name:pName.value.trim(),gender:pGender.value,
 birthday:pBirthday.value,phone:pPhone.value.trim(),
 email:pEmail.value.trim(),address:pAddress.value.trim()};
-if(!p.name||!p.email.includes("@")){alert("Enter a valid name and email.");return}
-profiles[key()]=p;user.name=p.name;user.email=p.email;
+if(!p.name||p.email.toLowerCase()!==user.email.toLowerCase()){alert("Enter a valid name. To change your login email, use your authentication account settings.");return}
+profiles[key()]=p;user.name=p.name;
+if(users[user.email.toLowerCase()])users[user.email.toLowerCase()].name=p.name;
 save();updateAccount();alert("Profile saved!");openPage("me");
 }
 function changePfp(e){
@@ -766,3 +786,5 @@ if(user){enterApp()}
 </script>
 </body>
 </html>
+
+
