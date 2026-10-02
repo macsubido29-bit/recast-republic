@@ -2,273 +2,275 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>My Editable Website</title>
+    <title>SaikiHub</title>
 
-<style>
-* {
-    box-sizing: border-box;
-}
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
 
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f4f4f4;
-    color: #222;
-}
+        /* EDITOR BAR */
+        .editor {
+            background: #222;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-/* TOP BAR */
-.editor-bar {
-    background: #111;
-    color: white;
-    padding: 12px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+        .editor button {
+            background: #00a86b;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
 
-.editor-bar button {
-    background: #00a86b;
-    color: white;
-    border: none;
-    padding: 10px 18px;
-    border-radius: 6px;
-    cursor: pointer;
-}
+        /* WEBSITE */
+        .website {
+            max-width: 1200px;
+            margin: auto;
+            background: white;
+            min-height: 100vh;
+        }
 
-.editor-bar button:hover {
-    background: #008f5b;
-}
+        /* HEADER */
+        header {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #ddd;
+        }
 
-/* WEBSITE */
-.website {
-    max-width: 1200px;
-    margin: auto;
-    background: white;
-    min-height: 100vh;
-}
+        .logo {
+            font-size: 25px;
+            font-weight: bold;
+        }
 
-/* HEADER */
-header {
-    padding: 20px 40px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #ddd;
-}
+        nav a {
+            margin-left: 20px;
+            text-decoration: none;
+            color: black;
+        }
 
-.logo {
-    font-size: 25px;
-    font-weight: bold;
-}
+        /* HERO */
+        .hero {
+            text-align: center;
+            padding: 100px 20px;
+            background: #e8f8f1;
+        }
 
-nav a {
-    margin-left: 20px;
-    text-decoration: none;
-    color: #222;
-}
+        .hero h1 {
+            font-size: 50px;
+        }
 
-/* HERO */
-.hero {
-    text-align: center;
-    padding: 100px 20px;
-    background: #eaf7f2;
-}
+        .hero p {
+            font-size: 20px;
+        }
 
-.hero h1 {
-    font-size: 50px;
-    margin-bottom: 20px;
-}
+        .hero button {
+            padding: 14px 25px;
+            background: #00a86b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
 
-.hero p {
-    font-size: 20px;
-    color: #555;
-}
+        /* PRODUCTS */
+        .products {
+            padding: 50px 20px;
+        }
 
-.hero button {
-    margin-top: 20px;
-    padding: 14px 25px;
-    border: none;
-    background: #00a86b;
-    color: white;
-    border-radius: 7px;
-    font-size: 16px;
-    cursor: pointer;
-}
+        .products h2 {
+            text-align: center;
+        }
 
-/* PRODUCTS */
-.products {
-    padding: 60px 30px;
-}
+        .product-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
 
-.products h2 {
-    text-align: center;
-    margin-bottom: 40px;
-}
+        .product {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+        }
 
-.product-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 25px;
-}
+        .product img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+        }
 
-.product {
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    overflow: hidden;
-    background: white;
-}
+        .product-info {
+            padding: 20px;
+        }
 
-.product img {
-    width: 100%;
-    height: 220px;
-    object-fit: cover;
-}
+        .price {
+            font-size: 20px;
+            font-weight: bold;
+        }
 
-.product-info {
-    padding: 20px;
-}
+        /* EDITABLE */
+        [contenteditable="true"] {
+            outline: 2px dashed transparent;
+        }
 
-.price {
-    font-size: 20px;
-    font-weight: bold;
-}
+        [contenteditable="true"]:hover {
+            outline: 2px dashed #00a86b;
+        }
 
-/* EDIT MODE */
-.editable {
-    outline: 2px dashed transparent;
-}
+        /* FOOTER */
+        footer {
+            background: #222;
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
 
-.editable:hover {
-    outline: 2px dashed #00a86b;
-    cursor: text;
-}
+        @media(max-width:700px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+            }
 
-/* FOOTER */
-footer {
-    text-align: center;
-    padding: 30px;
-    background: #111;
-    color: white;
-}
+            .product-container {
+                grid-template-columns: 1fr;
+            }
 
-/* MOBILE */
-@media (max-width: 700px) {
-
-    header {
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .hero h1 {
-        font-size: 35px;
-    }
-
-    .product-grid {
-        grid-template-columns: 1fr;
-    }
-}
-</style>
+            .hero h1 {
+                font-size: 35px;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-<!-- EDITOR BAR -->
-<div class="editor-bar">
+<!-- EDITOR -->
+<div class="editor">
 
-    <strong>My Website Editor</strong>
+    <strong>SaikiHub Website Editor</strong>
 
     <button onclick="saveWebsite()">
-        💾 Save Website
+        💾 SAVE
     </button>
 
 </div>
 
 
+<!-- WEBSITE -->
 <div class="website">
+
 
     <!-- HEADER -->
     <header>
 
         <div
-            class="logo editable"
+            class="logo"
             contenteditable="true">
+
             SaikiHub
+
         </div>
 
+
         <nav>
+
             <a href="#home">Home</a>
+
             <a href="#products">Products</a>
+
             <a href="#contact">Contact</a>
+
         </nav>
 
     </header>
 
 
-    <!-- HERO -->
-    <section class="hero" id="home">
+    <!-- HOME -->
+    <section
+        class="hero"
+        id="home">
 
-        <h1
-            class="editable"
-            contenteditable="true">
+        <h1 contenteditable="true">
+
             Welcome to SaikiHub
+
         </h1>
 
-        <p
-            class="editable"
-            contenteditable="true">
-            Buy and sell collectibles, figures and accessories.
+
+        <p contenteditable="true">
+
+            Your marketplace for figures,
+            collectibles and accessories.
+
         </p>
 
+
         <button
-            class="editable"
-            contenteditable="true"
-            onclick="alert('Button clicked!')">
-            Shop Now
+            contenteditable="true">
+
+            SHOP NOW
+
         </button>
 
     </section>
 
 
     <!-- PRODUCTS -->
-    <section class="products" id="products">
+    <section
+        class="products"
+        id="products">
 
-        <h2
-            class="editable"
-            contenteditable="true">
+        <h2 contenteditable="true">
+
             Featured Products
+
         </h2>
 
 
-        <div class="product-grid">
+        <div class="product-container">
+
 
             <!-- PRODUCT 1 -->
             <div class="product">
 
                 <img
-                    src="https://images.unsplash.com/photo-1594736797933-d0501ba2fe65"
-                    alt="Product">
+                    src="https://picsum.photos/500/400?random=1">
 
                 <div class="product-info">
 
-                    <h3
-                        class="editable"
-                        contenteditable="true">
+                    <h3 contenteditable="true">
+
                         1:12 Scale Figure
+
                     </h3>
 
-                    <p
-                        class="editable"
-                        contenteditable="true">
-                        Collectible figure for your display.
+
+                    <p contenteditable="true">
+
+                        Collectible figure
+                        for your display.
+
                     </p>
 
+
                     <div
-                        class="price editable"
+                        class="price"
                         contenteditable="true">
+
                         ₱1,500
+
                     </div>
 
                 </div>
@@ -280,27 +282,31 @@ footer {
             <div class="product">
 
                 <img
-                    src="https://images.unsplash.com/photo-1608889825205-eebdb9fc5806"
-                    alt="Product">
+                    src="https://picsum.photos/500/400?random=2">
 
                 <div class="product-info">
 
-                    <h3
-                        class="editable"
-                        contenteditable="true">
+                    <h3 contenteditable="true">
+
                         Figure Accessories
+
                     </h3>
 
-                    <p
-                        class="editable"
-                        contenteditable="true">
-                        Accessories for 1:12 scale figures.
+
+                    <p contenteditable="true">
+
+                        Accessories for
+                        1:12 scale figures.
+
                     </p>
 
+
                     <div
-                        class="price editable"
+                        class="price"
                         contenteditable="true">
+
                         ₱500
+
                     </div>
 
                 </div>
@@ -312,66 +318,66 @@ footer {
             <div class="product">
 
                 <img
-                    src="https://images.unsplash.com/photo-1607604276583-eef5f5b6f1e4"
-                    alt="Product">
+                    src="https://picsum.photos/500/400?random=3">
 
                 <div class="product-info">
 
-                    <h3
-                        class="editable"
-                        contenteditable="true">
+                    <h3 contenteditable="true">
+
                         Display Items
+
                     </h3>
 
-                    <p
-                        class="editable"
-                        contenteditable="true">
-                        Display accessories for collectors.
+
+                    <p contenteditable="true">
+
+                        Items for collectors.
+
                     </p>
 
+
                     <div
-                        class="price editable"
+                        class="price"
                         contenteditable="true">
+
                         ₱800
+
                     </div>
 
                 </div>
 
             </div>
 
+
         </div>
 
     </section>
 
 
-    <!-- CONTACT -->
+    <!-- FOOTER -->
     <footer id="contact">
 
-        <p
-            class="editable"
-            contenteditable="true">
-            © 2026 SaikiHub - All Rights Reserved
+        <p contenteditable="true">
+
+            © 2026 SaikiHub
+
         </p>
 
     </footer>
+
 
 </div>
 
 
 <script>
 
-/*
-=========================================
-SAVE WEBSITE
-=========================================
-*/
-
 function saveWebsite() {
 
-    const website = document.querySelector(".website");
+    const website =
+        document.querySelector(".website");
 
     localStorage.setItem(
-        "myWebsite",
+        "saikihubWebsite",
         website.innerHTML
     );
 
@@ -380,21 +386,17 @@ function saveWebsite() {
 }
 
 
-/*
-=========================================
-LOAD WEBSITE
-=========================================
-*/
-
 window.onload = function() {
 
-    const savedWebsite =
-        localStorage.getItem("myWebsite");
+    const saved =
+        localStorage.getItem(
+            "saikihubWebsite"
+        );
 
-    if (savedWebsite) {
+    if (saved) {
 
-        document.querySelector(".website").innerHTML =
-            savedWebsite;
+        document.querySelector(".website")
+            .innerHTML = saved;
 
     }
 
