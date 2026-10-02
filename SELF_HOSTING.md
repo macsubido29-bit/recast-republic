@@ -36,11 +36,12 @@ password. Records continue to be saved if SMTP is unset.
 
 The VPS provider's machine name (currently `recast-republic`) is not necessarily
 a public DNS name. Before enabling HTTPS, obtain its public IP from the provider
-and create an `A` record for `api.recastrepublic.com` pointing to that IP. Open
+and create an `A` record for the API hostname you control (for example,
+`api.example.com`) pointing to that IP. Open
 ports 22, 80, and 443 in the provider firewall; keep port 3000 private. The
 GitHub Pages frontend can stay at the `github.io` address. For browsers that
-block third-party cookies, configure `www.recastrepublic.com` as the GitHub
-Pages custom domain and use that same-site frontend for account sign-in.
+block third-party cookies, use a frontend and API under the same registrable
+domain.
 
 From PowerShell on the computer containing this project, substitute the SSH
 username and VPS IP, then copy the app source to the VPS. Do not copy `.env`,
@@ -99,23 +100,23 @@ sudo systemctl status recast-republic --no-pager
 curl http://127.0.0.1:3000/api/health
 ```
 
-After the `api.recastrepublic.com` DNS record points to the VPS, install the
-supplied Nginx config and enable HTTPS for the API hostname:
+After the API hostname DNS record points to the VPS, replace `YOUR_DOMAIN` below
+with the domain you control, then install the supplied Nginx config and enable
+HTTPS for the API hostname:
 
 ```sh
-sudo sed 's/YOUR_DOMAIN/recastrepublic.com/g' /opt/recast-republic/app/deploy/nginx.conf | sudo tee /etc/nginx/sites-available/recast-republic
+sudo sed 's/YOUR_DOMAIN/example.com/g' /opt/recast-republic/app/deploy/nginx.conf | sudo tee /etc/nginx/sites-available/recast-republic
 sudo ln -s /etc/nginx/sites-available/recast-republic /etc/nginx/sites-enabled/recast-republic
 sudo nginx -t
 sudo systemctl reload nginx
-sudo certbot --nginx -d api.recastrepublic.com
+sudo certbot --nginx -d api.example.com
 ```
 
 Set `CORS_ORIGINS` in `/etc/recast-republic/store.env` to the exact frontend
-origins, for example
-`https://macsubido29-bit.github.io,https://www.recastrepublic.com`, then restart
-the service. The frontend's `api-config.js` points the static page at
-`https://api.recastrepublic.com`. GitHub Pages cannot run the Node.js/SQLite
-backend; it hosts only the storefront files.
+origins, for example `https://macsubido29-bit.github.io`, then restart the
+service. Configure `RR_API_BASE_URL` in the static site's `api-config.js` to
+the API origin, for example `https://api.example.com`. GitHub Pages cannot run
+the Node.js/SQLite backend; it hosts only the storefront files.
 
 To update the app later, upload the changed source files, copy them into
 `/opt/recast-republic/app`, rerun `npm ci --omit=dev --prefix
