@@ -1,44 +1,141 @@
-# Self-hosted store database
+# Self-hosting Recast Republic
 
-This setup runs the store on your own Node.js server and PostgreSQL database; it does not use Supabase or another hosted database partner. The site stores information submitted by registered buyers: account name/email, profile and delivery details, orders, and support messages. It does not collect anonymous browsing history, search terms, IP-based visitor profiles, or analytics. Passwords are stored as salted hashes; session tokens are stored hashed and sent to browsers only in HttpOnly cookies.
+The store serves `index.html` and its API from one Node.js process. Account,
+profile, address, product, order, notification, and support-message data is kept
+in a local SQLite database on the server. Anonymous catalog visitors are not
+assigned accounts or recorded. A signed-in cart stays in that browser until
+checkout; checkout revalidates prices and availability on the server.
 
-## Requirements
+## Requirements and startup
 
 - Node.js 20 or newer
-- PostgreSQL 14 or newer
-- A server/hosting plan that supports a continuously running Node.js app
-- HTTPS for a public production site
+- Persistent disk storage on the host
 
-## Start the app
+Install dependencies and start the store:
 
-1. Create a PostgreSQL database and a database user with permission to create tables and indexes in the app database.
-2. Copy `.env.example` to `.env`. Set `DATABASE_URL` to the PostgreSQL connection string. Keep `.env` private and out of source control.
-3. Install dependencies with `npm install`, then start with `npm start`.
-4. Point your HTTPS reverse proxy/domain to the Node app's port. If HTTPS is terminated at a trusted reverse proxy, set `TRUST_PROXY=true`.
-
-At startup the server creates the tables in `db/schema.sql` and inserts the eight original products only when the shared catalog is empty. Open the app through the server URL; opening `index.html` directly as a `file:` URL bypasses the backend.
-
-## Authorize seller and admin accounts
-
-Visitors can register as buyers. A database administrator must explicitly promote an account after verifying its owner:
-
-```sql
-update app_users set role = 'seller' where email = 'seller@example.com';
-update app_users set role = 'admin' where email = 'recastrepublic29@gmail.com';
+```sh
+npm install
+npm start
 ```
 
-Use the admin email address only for the trusted administrator account. Never let visitors choose their own roles. The admin can download the submitted visitor/account data export from Seller Center.
+Open `http://localhost:3000` (or the deployed server URL), not `index.html` as a
+`file://` page. SQLite is created automatically at `data/recast-republic.sqlite`
+the first time the server starts, and the original collectibles are inserted if
+the catalog is empty. Keep the `data` directory on persistent storage and include
+it in secure backups. `DB_PATH` in `.env` can point to another persistent file.
+The database file is excluded from Git.
 
-## Admin email alerts (optional)
+In production, serve the app over HTTPS. Optional SMTP settings in `.env.example`
+send new-order, order-update, and support-message alerts to `ADMIN_EMAIL`
+(`recastrepublic29@gmail.com` by default). For Gmail, use `smtp.gmail.com`, port
+`587`, `SMTP_SECURE=false`, your Gmail address as `SMTP_USER` and `SMTP_FROM`,
+and a Google App Password as `SMTP_PASSWORD`. Do not use your normal Gmail
+password. Records continue to be saved if SMTP is unset.
 
-To send order and status notifications to `recastrepublic29@gmail.com`, configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, and `SMTP_FROM` in the server's private environment. Email delivery uses that SMTP account; it is not needed for database storage. If SMTP is not configured, orders still save and the app tells the user that the email was not sent.
+## Deploy to the Ubuntu 24.04 VPS
 
-## Data and backups
+The VPS provider's machine name (currently `recast-republic`) is not necessarily
+a public DNS name. Before enabling HTTPS, obtain its public IP from the provider
+and create an `A` record for `api.recastrepublic.com` pointing to that IP. Open
+ports 22, 80, and 443 in the provider firewall; keep port 3000 private. The
+GitHub Pages frontend can stay at the `github.io` address. For browsers that
+block third-party cookies, configure `www.recastrepublic.com` as the GitHub
+Pages custom domain and use that same-site frontend for account sign-in.
 
-The database is the source of truth across devices. It stores registered account details, optional profile and delivery information, product listings, order snapshots/status, notifications, and buyer/seller support messages. Cart contents remain in the visitor's browser until checkout. Anonymous visitors are not individually identified or recorded.
+From PowerShell on the computer containing this project, substitute the SSH
+username and VPS IP, then copy the app source to the VPS. Do not copy `.env`,
+`node_modules`, or a local database:
 
-Back up PostgreSQL regularly using your hosting provider's backup facility or `pg_dump`, and protect the backup because it contains personal and delivery information. Only the buyer and authorized sellers/admins can access order/message records through the app; admin export is restricted to the `admin` role. Do not publish database credentials, `.env`, password hashes, or session records.
+```powershell
+ssh user@VPS_PUBLIC_IP "mkdir -p /tmp/recast-republic"
+scp -r index.html server.js package.json package-lock.json db deploy user@VPS_PUBLIC_IP:/tmp/recast-republic/
+```
 
-## Existing browser-only data
+Connect by SSH, then install Node.js 22, Nginx, and the required system tools:
 
-Old accounts, orders, messages, and custom products from `localStorage` are not automatically migrated. The shared database starts with the built-in products. Keep the old browser data until you have manually transferred anything you need.
+```sh
+sudo apt update
+sudo apt install -y ca-certificates curl gnupg nginx certbot python3-certbot-nginx sqlite3
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
+node --version
+```
+
+Continue in the SSH session to install the app and create its private persistent
+database directory:
+
+```sh
+sudo useradd --system --home-dir /opt/recast-republic --create-home --shell /usr/sbin/nologin recast-republic
+sudo install -d -o root -g recast-republic -m 0750 /opt/recast-republic/app
+sudo cp -a /tmp/recast-republic/. /opt/recast-republic/app/
+sudo chown -R root:recast-republic /opt/recast-republic/app
+sudo chmod -R o-rwx /opt/recast-republic/app
+sudo install -d -o recast-republic -g recast-republic -m 0750 /var/lib/recast-republic
+sudo install -d -o root -g root -m 0750 /etc/recast-republic
+sudo npm ci --omit=dev --prefix /opt/recast-republic/app
+```
+
+Create `/etc/recast-republic/store.env` with `sudo nano` and set:
+
+```ini
+NODE_ENV=production
+HOST=127.0.0.1
+PORT=3000
+DB_PATH=/var/lib/recast-republic/store.sqlite
+TRUST_PROXY=true
+ADMIN_EMAIL=recastrepublic29@gmail.com
+```
+
+Add SMTP settings there only if admin email alerts are desired. Restrict the
+file, install the service, and start it:
+
+```sh
+sudo chown root:recast-republic /etc/recast-republic/store.env
+sudo chmod 0640 /etc/recast-republic/store.env
+sudo install -m 0644 /opt/recast-republic/app/deploy/recast-republic.service /etc/systemd/system/recast-republic.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now recast-republic
+sudo systemctl status recast-republic --no-pager
+curl http://127.0.0.1:3000/api/health
+```
+
+After the `api.recastrepublic.com` DNS record points to the VPS, install the
+supplied Nginx config and enable HTTPS for the API hostname:
+
+```sh
+sudo sed 's/YOUR_DOMAIN/recastrepublic.com/g' /opt/recast-republic/app/deploy/nginx.conf | sudo tee /etc/nginx/sites-available/recast-republic
+sudo ln -s /etc/nginx/sites-available/recast-republic /etc/nginx/sites-enabled/recast-republic
+sudo nginx -t
+sudo systemctl reload nginx
+sudo certbot --nginx -d api.recastrepublic.com
+```
+
+Set `CORS_ORIGINS` in `/etc/recast-republic/store.env` to the exact frontend
+origins, for example
+`https://macsubido29-bit.github.io,https://www.recastrepublic.com`, then restart
+the service. The frontend's `api-config.js` points the static page at
+`https://api.recastrepublic.com`. GitHub Pages cannot run the Node.js/SQLite
+backend; it hosts only the storefront files.
+
+To update the app later, upload the changed source files, copy them into
+`/opt/recast-republic/app`, rerun `npm ci --omit=dev --prefix
+/opt/recast-republic/app` when dependencies change, and restart with
+`sudo systemctl restart recast-republic`. Back up
+`/var/lib/recast-republic/store.sqlite` securely and test restoring backups.
+
+## Grant seller or admin access
+
+New accounts are buyers by default and cannot grant themselves elevated access.
+After creating the account, update its role in the local database with SQLite:
+
+```sh
+sqlite3 data/recast-republic.sqlite "update app_users set role='seller' where email='seller@example.com';"
+sqlite3 data/recast-republic.sqlite "update app_users set role='admin' where email='recastrepublic29@gmail.com';"
+```
+
+If the SQLite CLI is not installed, use a SQLite database manager to run the
+same `UPDATE` statements against `data/recast-republic.sqlite`. Sign out and
+back in so the store reloads the role. Sellers can manage products, orders, and
+buyer support messages. Admins can also restore the original catalog and
+download a JSON export. Protect the database, backups, and downloaded exports as
+sensitive personal data.
