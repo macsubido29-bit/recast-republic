@@ -164,7 +164,7 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 
 <!-- CART -->
 <section id="cart" class="page">
-<button class="back" onclick="openPage('home')">â† Continue Shopping</button>
+<button class="back" onclick="openPage('home')">← Continue Shopping</button>
 <h2>🛒 My Cart</h2>
 <div class="card" id="cartItems"></div>
 <div class="card">
@@ -175,7 +175,7 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 
 <!-- MESSAGES -->
 <section id="messages" class="page">
-<h2>ðŸ’¬ Messages</h2>
+<h2>💬 Messages</h2>
 <div class="card">
 <b>Recast Republic Support</b><p class="small">Messages are saved to the store server. Seller replies appear here.</p><hr>
 <div id="chatLog" style="height:300px;overflow:auto"></div>
@@ -188,7 +188,7 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 
 <!-- NOTIFICATIONS -->
 <section id="notifications" class="page">
-<h2>ðŸ”” Notifications</h2>
+<h2>🔔 Notifications</h2>
 <div class="card" id="notificationList"></div>
 </section>
 
@@ -197,43 +197,43 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <div class="card">
 <div class="row">
 <div class="row" style="justify-content:flex-start">
-<div class="avatar" id="accountAvatar">ðŸ‘¤</div>
+<div class="avatar" id="accountAvatar">👤</div>
 <div><b id="accountName">Buyer</b><p class="small" id="accountEmail"></p>
-<button class="back" onclick="openPage('profile')">Edit Profile â€º</button></div>
+<button class="back" onclick="openPage('profile')">Edit Profile ›</button></div>
 </div>
-<div><button class="btn light" onclick="openPage('settings')">âš™ï¸</button>
-<button class="btn light" onclick="openPage('messages')">ðŸ’¬</button></div>
+<div><button class="btn light" onclick="openPage('settings')">⚙️</button>
+<button class="btn light" onclick="openPage('messages')">💬</button></div>
 </div>
 </div>
 <div class="card">
-<div class="row"><h3>My Orders</h3><button class="back" onclick="openPage('history')">View All â€º</button></div>
+<div class="row"><h3>My Orders</h3><button class="back" onclick="openPage('history')">View All ›</button></div>
 <div class="account-grid">
-<button onclick="openOrders('To Ship')"><span>ðŸ“¦</span><small>To Ship</small></button>
-<button onclick="openOrders('To Receive')"><span>ðŸšš</span><small>To Receive</small></button>
-<button onclick="openPage('history')"><span>ðŸ“‹</span><small>History</small></button>
+<button onclick="openOrders('To Ship')"><span>📦</span><small>To Ship</small></button>
+<button onclick="openOrders('To Receive')"><span>🚚</span><small>To Receive</small></button>
+<button onclick="openPage('history')"><span>📋</span><small>History</small></button>
 </div>
 </div>
 <div class="card">
 <h3>My Services</h3>
 <div class="account-grid">
-<button onclick="openPage('address')"><span>ðŸ“</span><small>My Address</small></button>
-<button onclick="openPage('messages')"><span>ðŸ’¬</span><small>Messages</small></button>
-<button onclick="openPage('help')"><span>ðŸ¤–</span><small>Help Center</small></button>
+<button onclick="openPage('address')"><span>📍</span><small>My Address</small></button>
+<button onclick="openPage('messages')"><span>💬</span><small>Messages</small></button>
+<button onclick="openPage('help')"><span>🤖</span><small>Help Center</small></button>
 </div>
 </div>
 <div class="card">
-<button class="btn light" style="width:100%" onclick="openPage('settings')">âš™ï¸ Settings</button>
+<button class="btn light" style="width:100%" onclick="openPage('settings')">⚙️ Settings</button>
 <button class="btn red" style="width:100%" onclick="logout()">Logout</button>
 </div>
 </section>
 
 <!-- PROFILE -->
 <section id="profile" class="page">
-<button class="back" onclick="openPage('me')">â† My Account</button>
+<button class="back" onclick="openPage('me')">← My Account</button>
 <h2>Edit Profile</h2>
 <div class="card">
 <div style="text-align:center">
-<div class="avatar" id="profileAvatar" style="width:90px;height:90px;margin:auto">ðŸ‘¤</div>
+<div class="avatar" id="profileAvatar" style="width:90px;height:90px;margin:auto">👤</div>
 <label class="btn light" style="display:inline-block;margin:12px">Change PFP
 <input type="file" id="pfpInput" accept="image/*" style="display:none" onchange="changePfp(event)">
 </label></div>
@@ -249,15 +249,15 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 
 <!-- SETTINGS -->
 <section id="settings" class="page">
-<button class="back" onclick="openPage('me')">â† My Account</button>
-<h2>âš™ï¸ Settings</h2>
+<button class="back" onclick="openPage('me')">← My Account</button>
+<h2>⚙️ Settings</h2>
 <div class="card">
-<button class="row" style="width:100%;background:none;color:white;padding:10px 0" onclick="openPage('address')">ðŸ“ My Address <span>â€º</span></button><hr>
-<button class="row" style="width:100%;background:none;color:white;padding:10px 0" onclick="openPage('profile')">ðŸ‘¤ Account Details <span>â€º</span></button><hr>
-<button class="row" style="width:100%;background:none;color:white;padding:10px 0" onclick="openPage('help')">ðŸ¤– Help Center <span>â€º</span></button>
+<button class="row" style="width:100%;background:none;color:white;padding:10px 0" onclick="openPage('address')">📍 My Address <span>›</span></button><hr>
+<button class="row" style="width:100%;background:none;color:white;padding:10px 0" onclick="openPage('profile')">👤 Account Details <span>›</span></button><hr>
+<button class="row" style="width:100%;background:none;color:white;padding:10px 0" onclick="openPage('help')">🤖 Help Center <span>›</span></button>
 </div>
 <div class="card">
-<h3>ðŸ›¡ï¸ Seller Center</h3>
+<h3>🛡️ Seller Center</h3>
 <p class="small">Authorized seller access to manage products and orders.</p>
 <button class="btn gold" style="width:100%" onclick="sellerLogin()">Enter Seller Mode</button>
 </div>
@@ -267,8 +267,8 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 
 <!-- ADDRESS -->
 <section id="address" class="page">
-<button class="back" onclick="openPage('me')">â† My Account</button>
-<h2>ðŸ“ My Address</h2>
+<button class="back" onclick="openPage('me')">← My Account</button>
+<h2>📍 My Address</h2>
 <div class="card">
 <label>Recipient Name</label><input id="aName">
 <label>Phone Number</label><input id="aPhone">
@@ -282,18 +282,18 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 
 <!-- ORDER HISTORY -->
 <section id="history" class="page">
-<button class="back" onclick="openPage('me')">â† My Account</button>
-<h2>ðŸ“‹ Order History</h2><div id="historyList"></div>
+<button class="back" onclick="openPage('me')">← My Account</button>
+<h2>📋 Order History</h2><div id="historyList"></div>
 </section>
 <section id="orders" class="page">
-<button class="back" onclick="openPage('me')">â† My Account</button>
+<button class="back" onclick="openPage('me')">← My Account</button>
 <h2 id="ordersTitle">My Orders</h2><div id="ordersList"></div>
 </section>
 
 <!-- HELP -->
 <section id="help" class="page">
-<button class="back" onclick="openPage('me')">â† My Account</button>
-<h2>ðŸ¤– AI Help Center</h2>
+<button class="back" onclick="openPage('me')">← My Account</button>
+<h2>🤖 Help Center</h2>
 <div class="card">
 <p class="small">Automated help assistant for common questions.</p>
 <div id="aiLog" style="min-height:160px;padding:10px">Hello! Ask me about products, orders, or your account.</div>
@@ -309,40 +309,40 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 
 <!-- SELLER DASHBOARD -->
 <section id="seller" class="page">
-<button class="back" onclick="openPage('settings')">â† Settings</button>
+<button class="back" onclick="openPage('settings')">← Settings</button>
 <div class="seller-heading">
 <p style="color:var(--gold)">RECAST REPUBLIC / ADMIN</p>
-<h2>ðŸ›¡ï¸ Seller Center</h2><p class="small">Store management dashboard</p>
+<h2>🛡️ Seller Center</h2><p class="small">Store management dashboard</p>
 </div>
 <div class="account-grid" style="margin:12px 0">
-<div class="card"><span>ðŸ“¦</span><h3 id="sellerProductCount">0</h3><small>Products</small></div>
+<div class="card"><span>📦</span><h3 id="sellerProductCount">0</h3><small>Products</small></div>
 <div class="card"><span>🛒</span><h3 id="sellerOrderCount">0</h3><small>Orders</small></div>
 <div class="card"><span>💰</span><h3 id="sellerSales">₱0</h3><small>Order Total</small></div>
 </div>
 <div class="card">
-<h3>âž• Add New Product</h3>
+<h3>➕ Add New Product</h3>
 <label>Product Name</label><input id="newName" placeholder="Product name">
 <label>Price (₱)</label><input id="newPrice" type="number" min="1" placeholder="Price">
-<label>Emoji / Icon</label><input id="newEmoji" placeholder="e.g. ðŸ¤–">
+<label>Emoji / Icon</label><input id="newEmoji" placeholder="e.g. 🤖">
 <label>Description</label><textarea id="newDesc" placeholder="Product details"></textarea>
 <label>Product Photo (optional)</label><input id="newPhoto" type="file" accept="image/*" onchange="handleProductPhoto(event)">
 <div id="newPhotoPreview" class="photo" style="display:none;height:120px;margin:0 0 12px;border-radius:6px"></div>
 <button class="btn gold" style="width:100%" onclick="addProduct()">Add Product</button>
 </div>
-<div class="card"><h3>ðŸ“¦ Manage Products</h3><div id="sellerProductList"></div></div>
-<div class="card" id="adminRestoreTools" hidden><h3>â™»ï¸ Restore Armory</h3><p class="small">Restore the original Recast Republic collectibles if the catalog was cleared.</p><button class="btn light" style="width:100%" onclick="restoreDefaultProducts()">Restore Default Collectibles</button></div>
-<div class="card"><h3>ðŸ§¾ Customer Orders</h3><div id="sellerOrders"></div></div>
-<div class="card"><h3>ðŸ’¬ Customer Messages</h3><p class="small">Reply to customer messages here.</p><div id="sellerMessages"></div></div>
+<div class="card"><h3>📦 Manage Products</h3><div id="sellerProductList"></div></div>
+<div class="card" id="adminRestoreTools" hidden><h3>♻️ Restore Armory</h3><p class="small">Restore the original Recast Republic collectibles if the catalog was cleared.</p><button class="btn light" style="width:100%" onclick="restoreDefaultProducts()">Restore Default Collectibles</button></div>
+<div class="card"><h3>🧾 Customer Orders</h3><div id="sellerOrders"></div></div>
+<div class="card"><h3>💬 Customer Messages</h3><p class="small">Reply to customer messages here.</p><div id="sellerMessages"></div></div>
 <div class="card" id="adminDataTools" hidden><h3>Admin data</h3><p class="small">Download account, profile, product, order, message, and notification data stored on this server.</p><button class="btn light" onclick="exportVisitorData()">Download server data</button></div>
 <button class="btn red" style="width:100%" onclick="openPage('settings')">Exit Seller Mode</button>
 </section>
 </main>
 
 <nav id="nav" class="nav" style="display:none">
-<button id="nav-home" class="active" onclick="openPage('home')"><span>ðŸ </span>Home</button>
-<button id="nav-messages" onclick="openPage('messages')"><span>ðŸ’¬</span>Message</button>
-<button id="nav-notifications" onclick="openPage('notifications')"><span>ðŸ””</span>Notice</button>
-<button id="nav-me" onclick="openPage('me')"><span>ðŸ‘¤</span>Me</button>
+<button id="nav-home" class="active" onclick="openPage('home')"><span>🏠</span>Home</button>
+<button id="nav-messages" onclick="openPage('messages')"><span>💬</span>Message</button>
+<button id="nav-notifications" onclick="openPage('notifications')"><span>🔔</span>Notice</button>
+<button id="nav-me" onclick="openPage('me')"><span>👤</span>Me</button>
 </nav>
 
 <div class="modal" id="productModal"><div class="modalbox">
@@ -362,14 +362,14 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <script>
 // DATA
 const defaultProducts=[
-{id:1,name:"Anime Action Figure",price:850,emoji:"ðŸ¦¸",desc:"Anime-inspired action figure for display."},
-{id:2,name:"Miniature Wooden Cabinet",price:450,emoji:"ðŸ—„ï¸",desc:"Miniature cabinet for 1:12 scale dioramas."},
-{id:3,name:"Chibi Character Figure",price:550,emoji:"ðŸ‘¾",desc:"Cute chibi-style collectible."},
-{id:4,name:"Miniature School Desk",price:350,emoji:"ðŸª‘",desc:"Detailed miniature school desk."},
-{id:5,name:"Fantasy Warrior Figure",price:1200,emoji:"âš”ï¸",desc:"Fantasy collectible display figure."},
-{id:6,name:"Miniature Room Set",price:1500,emoji:"ðŸ ",desc:"Miniature room for dioramas."},
-{id:7,name:"Robot Collectible",price:950,emoji:"ðŸ¤–",desc:"Robot-inspired display figure."},
-{id:8,name:"Custom Display Stand",price:250,emoji:"ðŸŽ",desc:"Stand for your favorite figures."}
+{id:1,name:"Anime Action Figure",price:850,emoji:"🦸",desc:"Anime-inspired action figure for display."},
+{id:2,name:"Miniature Wooden Cabinet",price:450,emoji:"🗄️",desc:"Miniature cabinet for 1:12 scale dioramas."},
+{id:3,name:"Chibi Character Figure",price:550,emoji:"👾",desc:"Cute chibi-style collectible."},
+{id:4,name:"Miniature School Desk",price:350,emoji:"🪑",desc:"Detailed miniature school desk."},
+{id:5,name:"Fantasy Warrior Figure",price:1200,emoji:"⚔️",desc:"Fantasy collectible display figure."},
+{id:6,name:"Miniature Room Set",price:1500,emoji:"🏠",desc:"Miniature room for dioramas."},
+{id:7,name:"Robot Collectible",price:950,emoji:"🤖",desc:"Robot-inspired display figure."},
+{id:8,name:"Custom Display Stand",price:250,emoji:"🎁",desc:"Stand for your favorite figures."}
 ];
 let products=[];
 let users={};
@@ -593,7 +593,7 @@ function openModal(id){document.getElementById(id).classList.add("show")}
 function closeModal(id){document.getElementById(id).classList.remove("show")}
 function addToCart(id,qty=1){
 if(!user){showAuth();return}
-qty=Math.floor(Number(qty));if(!Number.isFinite(qty)||qty<1||qty>99){alert("Quantity must be 1â€“99.");return}
+qty=Math.floor(Number(qty));if(!Number.isFinite(qty)||qty<1||qty>99){alert("Quantity must be 1–99.");return}
 let p=products.find(x=>x.id===id);if(!p)return;
 let item=cart.find(x=>x.id===id);
 if(item)item.qty+=qty;else cart.push({id,qty});
@@ -610,7 +610,7 @@ let p=products.find(x=>x.id===i.id);total+=p.price*i.qty;
 return `<div class="order"><div class="emoji">${esc(p.emoji)}</div>
 <div class="details"><b>${esc(p.name)}</b><p class="price">${money(p.price)}</p>
 <div class="row" style="justify-content:flex-start">
-<button class="btn light" onclick="changeQty(${p.id},-1)">âˆ’</button><span>${i.qty}</span>
+<button class="btn light" onclick="changeQty(${p.id},-1)">−</button><span>${i.qty}</span>
 <button class="btn light" onclick="changeQty(${p.id},1)">+</button>
 <button class="btn red" onclick="removeItem(${p.id})">Remove</button></div></div></div>`;
 }).join("")||'<p class="empty">Your cart is empty.</p>';
@@ -625,7 +625,7 @@ function checkout(){
 if(!cart.length){alert("Your cart is empty.");return}
 let a=address();checkoutAddress.value=a.full||"";
 let total=cart.reduce((s,i)=>s+products.find(p=>p.id===i.id).price*i.qty,0);
-checkoutSummary.innerHTML=cart.map(i=>{let p=products.find(x=>x.id===i.id);return `<p>${esc(p.emoji)} ${esc(p.name)} Ã— ${i.qty} â€” ${money(p.price*i.qty)}</p>`}).join("")+
+checkoutSummary.innerHTML=cart.map(i=>{let p=products.find(x=>x.id===i.id);return `<p>${esc(p.emoji)} ${esc(p.name)} × ${i.qty} — ${money(p.price*i.qty)}</p>`}).join("")+
 `<hr><b>Total: ${money(total)}</b>`;
 openModal("checkoutModal");
 }
@@ -645,7 +645,7 @@ await openPage("history");
 function orderHTML(o){
 return `<div class="card"><div class="row"><b>Order #${esc(o.id)}</b><span class="pill">${esc(o.status)}</span></div>
 <p class="small">${esc(o.date)}</p><hr>
-${o.items.map(i=>{let p=products.find(x=>x.id===i.id);return `<div class="order"><span class="emoji">${p?.photo?`<img src="${esc(p.photo)}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:5px">`:esc(p?.emoji||"ðŸ“¦")}</span><div class="details">${esc(p?.name||"Item")} Ã— ${i.qty}</div></div>`}).join("")}
+${o.items.map(i=>{let p=products.find(x=>x.id===i.id);return `<div class="order"><span class="emoji">${p?.photo?`<img src="${esc(p.photo)}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:5px">`:esc(p?.emoji||"📦")}</span><div class="details">${esc(p?.name||"Item")} × ${i.qty}</div></div>`}).join("")}
 <p class="small">Payment: ${esc(o.payment)}</p><p class="small">Address: ${esc(o.address)}</p>
 <div class="row"><b>Total: ${money(o.total)}</b>
 ${o.status==="To Ship"?'<button class="btn red" onclick="cancelOrder(\''+esc(o.id)+'\')">Cancel Order</button>':o.status==="To Receive"?'<button class="btn gold" onclick="buyerReceived(\''+esc(o.id)+'\')">Received</button>':o.status==="Cancelled"?'<span class="small">This order was cancelled.</span>':'<span class="pill">Completed</span>'}
@@ -689,14 +689,14 @@ o.status=result.order.status;await refreshPrivateData();renderHistory();
 function updateAccount(){
 let p=profile();accountName.textContent=p.name||user.name;
 accountEmail.textContent=p.email||user.email;
-accountAvatar.innerHTML=p.pfp?`<img src="${p.pfp}">`:"ðŸ‘¤";
+accountAvatar.innerHTML=p.pfp?`<img src="${p.pfp}">`:"👤";
 }
 function loadProfile(){
 let p=profile();
 pName.value=p.name||user.name;pGender.value=p.gender||"";
 pBirthday.value=p.birthday||"";pPhone.value=p.phone||"";
 pEmail.value=p.email||user.email;pAddress.value=p.address||"";
-profileAvatar.innerHTML=p.pfp?`<img src="${p.pfp}">`:"ðŸ‘¤";
+profileAvatar.innerHTML=p.pfp?`<img src="${p.pfp}">`:"👤";
 }
 async function saveProfile(){
 let p={...profile(),name:pName.value.trim(),gender:pGender.value,
@@ -737,7 +737,7 @@ alert("Address saved!");await openPage("me");
 // NOTIFICATIONS & CHAT
 function renderNotifications(){
 let mine=notifications.filter(n=>typeof n==="string"||n.buyer?.toLowerCase()===user.email.toLowerCase());
-notificationList.innerHTML=mine.map(n=>`<div style="padding:12px 0;border-bottom:1px solid var(--line)">ðŸ”” ${esc(n.text||n)}</div>`).join("")||'<p class="empty">No notifications yet.</p>';
+notificationList.innerHTML=mine.map(n=>`<div style="padding:12px 0;border-bottom:1px solid var(--line)">🔔 ${esc(n.text||n)}</div>`).join("")||'<p class="empty">No notifications yet.</p>';
 }
 function renderChat(){
 let thread=messages.filter(m=>m.buyer?.toLowerCase()===user.email.toLowerCase());
@@ -754,13 +754,13 @@ if(!message.adminEmailSent)alert("Message saved; the seller email notification w
 function askAI(){
 let msg=aiInput.value.trim();if(!msg)return;
 let q=msg.toLowerCase(),ans="Please contact store support using Messages for additional help.";
-if(q.includes("order")||q.includes("ship"))ans="Check My Account â†’ To Ship, To Receive, or History for your order status.";
+if(q.includes("order")||q.includes("ship"))ans="Check My Account → To Ship, To Receive, or History for your order status.";
 else if(q.includes("cart")||q.includes("buy"))ans="Choose a product, tap Add to Cart, then open your cart to checkout.";
-else if(q.includes("address"))ans="Go to My Account â†’ My Address to update your delivery details.";
+else if(q.includes("address"))ans="Go to My Account → My Address to update your delivery details.";
 else if(q.includes("price")||q.includes("product"))ans="You can browse all available items and prices on the Home page.";
 else if(q.includes("hello")||q.includes("hi"))ans="Hello! Welcome to Recast Republic. How can I help?";
 let u=document.createElement("p");u.style.textAlign="right";u.style.margin="10px 0";u.textContent="You: "+msg;
-let r=document.createElement("p");r.style.background="#302629";r.style.padding="10px";r.style.borderRadius="7px";r.textContent="ðŸ¤– "+ans;
+let r=document.createElement("p");r.style.background="#302629";r.style.padding="10px";r.style.borderRadius="7px";r.textContent="🤖 "+ans;
 aiLog.append(u,r);aiInput.value="";
 }
 
@@ -777,9 +777,9 @@ sellerProductList.innerHTML=products.map(p=>`
 <div class="seller-product"><div class="row"><div>
 <div class="row" style="justify-content:flex-start">${p.photo?`<img src="${esc(p.photo)}" alt="${esc(p.name)}" style="width:64px;height:64px;object-fit:cover;border-radius:6px">`:`<span>${esc(p.emoji)}</span>`}<b>${esc(p.name)}</b></div><p class="price">${money(p.price)}</p>
 <p class="small">${esc(p.desc)}</p></div>
-<div><button class="btn light" onclick="changeProductPhoto(${p.id})">ðŸ“· Photo</button>
-<button class="btn gold" onclick="editProduct(${p.id})">âœï¸ Edit</button>
-<button class="btn red" onclick="deleteProduct(${p.id})">ðŸ—‘ï¸ Delete</button></div>
+<div><button class="btn light" onclick="changeProductPhoto(${p.id})">📷 Photo</button>
+<button class="btn gold" onclick="editProduct(${p.id})">✏️ Edit</button>
+<button class="btn red" onclick="deleteProduct(${p.id})">🗑️ Delete</button></div>
 </div></div>`).join("")||'<p class="empty">No products.</p>';
 sellerOrders.innerHTML=orders.map(o=>`
 <div class="seller-product"><b>Order #${esc(o.id)}</b>
@@ -861,7 +861,7 @@ reader.readAsDataURL(file);
 }
 async function addProduct(){
 let name=newName.value.trim(),price=Number(newPrice.value),
-emoji=newEmoji.value.trim()||"ðŸ“¦",desc=newDesc.value.trim();
+emoji=newEmoji.value.trim()||"📦",desc=newDesc.value.trim();
 if(!name||!Number.isFinite(price)||price<=0||!desc){alert("Enter valid product details.");return}
 try{
 let product=await api("/products",{method:"POST",body:JSON.stringify({name,price,emoji,desc,photo:newProductPhoto||""})});
@@ -878,7 +878,7 @@ let pr=prompt("Price:",p.price);if(pr===null)return;
 let price=Number(pr);if(!n.trim()||!Number.isFinite(price)||price<=0){alert("Invalid details.");return}
 let em=prompt("Emoji:",p.emoji);if(em===null)return;
 let d=prompt("Description:",p.desc);if(d===null)return;
-let updated={...p,name:n.trim(),price,emoji:em.trim()||"ðŸ“¦",desc:d.trim()};
+let updated={...p,name:n.trim(),price,emoji:em.trim()||"📦",desc:d.trim()};
 try{let saved=await api("/products/"+id,{method:"PATCH",body:JSON.stringify(updated)});
 products=products.map(item=>item.id===id?saved:item);renderSeller();renderProducts();updateCart();alert("Product updated!");
 }catch(error){alert(error.message)}
