@@ -164,3 +164,15 @@ npm run admin:promote -- recastrepublic29@gmail.com
 The command only promotes the email configured by `ADMIN_EMAIL`. On the VPS,
 run it as the service user and explicitly load the production environment so it
 updates the production database, not a local default:
+
+```sh
+sudo -u recast-republic env ENV_FILE=/etc/recast-republic/store.env \
+  /usr/bin/node /opt/recast-republic/app/scripts/promote-admin.js recastrepublic29@gmail.com
+```
+
+Sign out and back in so the store reloads the role. Admins can review seller
+applications, restore the original catalog, and download a JSON export of
+accounts (excluding passwords), profiles, carts, products, orders, seller
+applications, messages, and notifications. Use the SQLite database itself for
+a full backup. Protect the database, backups, and downloaded exports as
+sensitive personal data.
