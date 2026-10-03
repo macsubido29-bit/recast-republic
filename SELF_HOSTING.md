@@ -1,18 +1,18 @@
 # Self-hosting Recast Republic
 
+GitHub stores the application source; the Ubuntu server runs Node.js behind
+Nginx and stores accounts and marketplace data in a persistent SQLite file.
 The store serves `index.html` and its API from one Node.js process. Account,
-profile, address, product, order, notification, and support-message data is kept
-in a local SQLite database on the server. Anonymous catalog visitors are not
-assigned accounts or recorded. Signed-in shopping carts are saved to the server
-per account and are available when that account signs in from another device.
-Checkout revalidates prices and availability on the server.
+profile, address, product, cart, order, notification, and support-message data
+is stored on the server. Anonymous catalog visitors are not assigned accounts
+or recorded. Checkout revalidates prices and availability on the server.
 
 ## Requirements and startup
 
 - Node.js 22 or newer
 - Persistent disk storage on the host
 
-Install dependencies and start the store:
+Install dependencies and start the store locally:
 
 ```sh
 npm install
@@ -23,8 +23,8 @@ Open `http://localhost:3000` (or the deployed server URL), not `index.html` as a
 `file://` page. SQLite is created automatically at `data/recast-republic.sqlite`
 the first time the server starts, and the original collectibles are inserted if
 the catalog is empty. Keep the `data` directory on persistent storage and include
-it in secure backups. `DB_PATH` in `.env` can point to another persistent file. The database file is
-excluded from Git.
+it in secure backups. `DB_PATH` in `.env` can point to another persistent file.
+The database file is excluded from Git.
 
 In production, serve the app over HTTPS. Optional SMTP settings in `.env.example`
 send new-order, order-update, seller-application, and support-message alerts to
@@ -43,48 +43,46 @@ approval or rejection still requires an authenticated admin in Seller Center.
 Missing settings or delivery errors are also logged by the server.
 Records continue to be saved if SMTP is unset.
 
-## Deploy to the Ubuntu 24.04 VPS
+## Deploy from GitHub to Ubuntu Server
 
-The VPS provider's machine name (currently `recast-republic`) is not necessarily
-a public DNS name. Before enabling HTTPS, obtain its public IP from the provider
-and confirm `recast-republic-29.ph` resolves to it. It currently resolves to
-`45.79.222.138`. Open ports 22, 80, and 443 in the provider firewall; keep port
-3000 private. The GitHub Pages frontend can stay at the `github.io` address.
-For browsers that block third-party cookies, use a frontend and API under the
-same registrable domain.
+This project is published at
+`https://github.com/macsubido29-bit/recast-republic` (default branch `main`).
+The VPS provider's machine name is not necessarily a public DNS name. Before
+enabling HTTPS, obtain its public IP from the provider and confirm
+`recast-republic-29.ph` resolves to it. Open ports 22, 80, and 443 in the
+provider firewall; keep port 3000 private. The GitHub Pages frontend can stay
+at the `github.io` address. For browsers that block third-party cookies, use a
+frontend and API under the same registrable domain.
 
-From PowerShell on the computer containing this project, substitute the SSH
-username and VPS IP, then copy the app source to the VPS. SSH port 22 was not
-reachable during the connection check, so enable SSH in the provider firewall
-or use the provider's web console. Do not copy `.env`, `node_modules`, or a
-local database:
-
-```powershell
-ssh user@45.79.222.138 "mkdir -p /tmp/recast-republic"
-scp -r index.html api-config.js server.js package.json package-lock.json db deploy user@45.79.222.138:/tmp/recast-republic/
-```
-
-Connect by SSH, then install Node.js 22, Nginx, and the required system tools:
+Connect to Ubuntu by SSH or its provider console. Port 22 was unreachable in
+the last connection check; if SSH still fails, open it in the provider firewall
+or use the web console. Install Git and create the service account and
+persistent directories:
 
 ```sh
 sudo apt update
-sudo apt install -y ca-certificates curl gnupg nginx certbot python3-certbot-nginx sqlite3
+sudo apt install -y ca-certificates curl gnupg git nginx certbot python3-certbot-nginx sqlite3
+sudo useradd --system --home-dir /opt/recast-republic --create-home --shell /usr/sbin/nologin recast-republic
+sudo install -d -o root -g recast-republic -m 0750 /opt/recast-republic/app
+sudo install -d -o recast-republic -g recast-republic -m 0750 /var/lib/recast-republic
+sudo install -d -o root -g root -m 0750 /etc/recast-republic
+```
+
+Install Node.js 22 or newer:
+
+```sh
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt install -y nodejs
 node --version
 ```
 
-Continue in the SSH session to install the app and create its private persistent
-database directory:
+Clone the GitHub source into the service directory and install production
+dependencies:
 
 ```sh
-sudo useradd --system --home-dir /opt/recast-republic --create-home --shell /usr/sbin/nologin recast-republic
-sudo install -d -o root -g recast-republic -m 0750 /opt/recast-republic/app
-sudo cp -a /tmp/recast-republic/. /opt/recast-republic/app/
+sudo git clone --branch main --single-branch https://github.com/macsubido29-bit/recast-republic.git /opt/recast-republic/app
 sudo chown -R root:recast-republic /opt/recast-republic/app
 sudo chmod -R o-rwx /opt/recast-republic/app
-sudo install -d -o recast-republic -g recast-republic -m 0750 /var/lib/recast-republic
-sudo install -d -o root -g root -m 0750 /etc/recast-republic
 sudo npm ci --omit=dev --prefix /opt/recast-republic/app
 ```
 
@@ -132,13 +130,20 @@ backend; it hosts only the storefront files. A browser connection is expected
 to fail until the API is deployed and the HTTPS certificate is installed.
 
 `ADMIN_KEY` is not used by this application. Admin privileges are assigned to
-accounts through the local SQLite database; do not assume setting an environment
-variable will create or authorize an admin account.
+accounts through SQLite; do not assume an environment variable creates an admin
+account.
 
-To update the app later, upload the changed source files, copy them into
-`/opt/recast-republic/app`, rerun `npm ci --omit=dev --prefix
-/opt/recast-republic/app` when dependencies change, and restart with
-`sudo systemctl restart recast-republic`. Back up
+To update the VPS after pushing source changes to GitHub, pull the branch and
+restart the service:
+
+```sh
+sudo git -C /opt/recast-republic/app pull --ff-only origin main
+sudo npm ci --omit=dev --prefix /opt/recast-republic/app
+sudo systemctl restart recast-republic
+sudo systemctl status recast-republic --no-pager
+```
+
+Back up
 `/var/lib/recast-republic/store.sqlite` securely and test restoring backups.
 
 ## Seller applications and admin access
@@ -149,18 +154,13 @@ remain pending until an admin reviews them under Seller Center; approval grants
 the seller role, and rejection leaves the account as a buyer.
 
 To bootstrap the first admin, create an account and set its role in SQLite.
-Register the account matching `ADMIN_EMAIL` first, then run this local command
-from the app directory (using the configured database path):
+Register the account matching `ADMIN_EMAIL` first. For a local database, run
+this from the project directory:
 
 ```sh
 npm run admin:promote -- recastrepublic29@gmail.com
 ```
 
-The command only promotes the email configured by `ADMIN_EMAIL`; on the VPS,
-run it after registering that account and while `DB_PATH` points to the
-production database. Sign out and back in so the store reloads the role. Admins
-can review seller applications, restore the original catalog, and download a
-JSON export of accounts (excluding passwords), profiles, carts, products,
-orders, seller applications, messages, and notifications. Use the SQLite
-database itself for a full backup. Protect the database, backups, and downloaded
-exports as sensitive personal data.
+The command only promotes the email configured by `ADMIN_EMAIL`. On the VPS,
+run it as the service user and explicitly load the production environment so it
+updates the production database, not a local default:
