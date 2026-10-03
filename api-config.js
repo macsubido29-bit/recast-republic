@@ -1,8 +1,14 @@
-window.RR_API_BASE_URL = window.RR_API_BASE_URL || (
-  (location.hostname === "localhost" || location.hostname === "127.0.0.1")
-    ? "http://localhost:3000"
-    : window.location.origin
-);
+// Recast Republic API Configuration
+// Point this to your VPS backend
 
-// If the API lives on a different host, set it explicitly before this script runs:
-// window.RR_API_BASE_URL = "https://api.example.com";
+// CHANGE THIS TO YOUR VPS IP OR DOMAIN:
+// If using DigitalOcean/Vultr/Linode, use: http://your-droplet-ip:3000
+// If you have a domain, use: https://your-domain.com
+
+window.RR_API_BASE_URL = "http://your-droplet-ip:3000";
+
+// Example with actual IP:
+// window.RR_API_BASE_URL = "http://123.45.67.89:3000";
+
+// Example with domain (requires HTTPS setup):
+// window.RR_API_BASE_URL = "https://api.yourdomain.com";
