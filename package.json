@@ -4,13 +4,14 @@
   "private": true,
   "description": "Self-hosted Recast Republic collectibles store",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "admin:promote": "node scripts/promote-admin.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "dependencies": {
-    "better-sqlite3": "^12.4.1",
+    "better-sqlite3": "^13.0.3",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
     "express-rate-limit": "^7.5.0",
