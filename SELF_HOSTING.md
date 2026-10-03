@@ -3,12 +3,13 @@
 The store serves `index.html` and its API from one Node.js process. Account,
 profile, address, product, order, notification, and support-message data is kept
 in a local SQLite database on the server. Anonymous catalog visitors are not
-assigned accounts or recorded. A signed-in cart stays in that browser until
-checkout; checkout revalidates prices and availability on the server.
+assigned accounts or recorded. Signed-in shopping carts are saved to the server
+per account and are available when that account signs in from another device.
+Checkout revalidates prices and availability on the server.
 
 ## Requirements and startup
 
-- Node.js 20 or newer
+- Node.js 22 or newer
 - Persistent disk storage on the host
 
 Install dependencies and start the store:
@@ -22,34 +23,45 @@ Open `http://localhost:3000` (or the deployed server URL), not `index.html` as a
 `file://` page. SQLite is created automatically at `data/recast-republic.sqlite`
 the first time the server starts, and the original collectibles are inserted if
 the catalog is empty. Keep the `data` directory on persistent storage and include
-it in secure backups. `DB_PATH` in `.env` can point to another persistent file.
-The database file is excluded from Git.
+it in secure backups. `DB_PATH` in `.env` can point to another persistent file. The database file is
+excluded from Git.
 
 In production, serve the app over HTTPS. Optional SMTP settings in `.env.example`
-send new-order, order-update, and support-message alerts to `ADMIN_EMAIL`
-(`recastrepublic29@gmail.com` by default). For Gmail, use `smtp.gmail.com`, port
-`587`, `SMTP_SECURE=false`, your Gmail address as `SMTP_USER` and `SMTP_FROM`,
-and a Google App Password as `SMTP_PASSWORD`. Do not use your normal Gmail
-password. Records continue to be saved if SMTP is unset.
+send new-order, order-update, seller-application, and support-message alerts to
+`ADMIN_EMAIL` (`recastrepublic29@gmail.com` by default). For Gmail, the defaults
+are `smtp.gmail.com`, port `587`, and
+`SMTP_SECURE=false`. Set `SMTP_USER` to the sending Gmail address and
+`SMTP_PASSWORD` to a Google App Password. The optional `SMTP_FROM` defaults to
+`SMTP_USER`. Do not use your normal Gmail password. Remove spaces from the App
+Password when putting it in the environment file, and do not paste it into chat
+or commit it.
+On the server, set these values in `/etc/recast-republic/store.env`; locally, use
+the ignored `.env` file. Restart the Node service after changing settings.
+Admins can check readiness and send a test message from Seller Center → Admin
+tools. New seller applications also email the configured admin for review;
+approval or rejection still requires an authenticated admin in Seller Center.
+Missing settings or delivery errors are also logged by the server.
+Records continue to be saved if SMTP is unset.
 
 ## Deploy to the Ubuntu 24.04 VPS
 
 The VPS provider's machine name (currently `recast-republic`) is not necessarily
 a public DNS name. Before enabling HTTPS, obtain its public IP from the provider
-and create an `A` record for the API hostname you control (for example,
-`api.example.com`) pointing to that IP. Open
-ports 22, 80, and 443 in the provider firewall; keep port 3000 private. The
-GitHub Pages frontend can stay at the `github.io` address. For browsers that
-block third-party cookies, use a frontend and API under the same registrable
-domain.
+and confirm `recast-republic-29.ph` resolves to it. It currently resolves to
+`45.79.222.138`. Open ports 22, 80, and 443 in the provider firewall; keep port
+3000 private. The GitHub Pages frontend can stay at the `github.io` address.
+For browsers that block third-party cookies, use a frontend and API under the
+same registrable domain.
 
 From PowerShell on the computer containing this project, substitute the SSH
-username and VPS IP, then copy the app source to the VPS. Do not copy `.env`,
-`node_modules`, or a local database:
+username and VPS IP, then copy the app source to the VPS. SSH port 22 was not
+reachable during the connection check, so enable SSH in the provider firewall
+or use the provider's web console. Do not copy `.env`, `node_modules`, or a
+local database:
 
 ```powershell
-ssh user@VPS_PUBLIC_IP "mkdir -p /tmp/recast-republic"
-scp -r index.html server.js package.json package-lock.json db deploy user@VPS_PUBLIC_IP:/tmp/recast-republic/
+ssh user@45.79.222.138 "mkdir -p /tmp/recast-republic"
+scp -r index.html api-config.js server.js package.json package-lock.json db deploy user@45.79.222.138:/tmp/recast-republic/
 ```
 
 Connect by SSH, then install Node.js 22, Nginx, and the required system tools:
@@ -100,23 +112,28 @@ sudo systemctl status recast-republic --no-pager
 curl http://127.0.0.1:3000/api/health
 ```
 
-After the API hostname DNS record points to the VPS, replace `YOUR_DOMAIN` below
-with the domain you control, then install the supplied Nginx config and enable
-HTTPS for the API hostname:
+After `recast-republic-29.ph` points at the VPS, install the supplied Nginx
+config and enable HTTPS:
 
 ```sh
-sudo sed 's/YOUR_DOMAIN/example.com/g' /opt/recast-republic/app/deploy/nginx.conf | sudo tee /etc/nginx/sites-available/recast-republic
+sudo install -m 0644 /opt/recast-republic/app/deploy/nginx.conf /etc/nginx/sites-available/recast-republic
 sudo ln -s /etc/nginx/sites-available/recast-republic /etc/nginx/sites-enabled/recast-republic
 sudo nginx -t
 sudo systemctl reload nginx
-sudo certbot --nginx -d api.example.com
+sudo certbot --nginx -d recast-republic-29.ph
 ```
 
-Set `CORS_ORIGINS` in `/etc/recast-republic/store.env` to the exact frontend
-origins, for example `https://macsubido29-bit.github.io`, then restart the
-service. Configure `RR_API_BASE_URL` in the static site's `api-config.js` to
-the API origin, for example `https://api.example.com`. GitHub Pages cannot run
-the Node.js/SQLite backend; it hosts only the storefront files.
+Set `WEBSITE_URL` in `/etc/recast-republic/store.env` to the frontend URL, for
+example `https://macsubido29-bit.github.io`, then restart the service. Optional
+additional origins can be listed in `CORS_ORIGINS`. The static site's
+`api-config.js` is configured to call
+`https://recast-republic-29.ph`. GitHub Pages cannot run the Node.js/SQLite
+backend; it hosts only the storefront files. A browser connection is expected
+to fail until the API is deployed and the HTTPS certificate is installed.
+
+`ADMIN_KEY` is not used by this application. Admin privileges are assigned to
+accounts through the local SQLite database; do not assume setting an environment
+variable will create or authorize an admin account.
 
 To update the app later, upload the changed source files, copy them into
 `/opt/recast-republic/app`, rerun `npm ci --omit=dev --prefix
@@ -124,19 +141,26 @@ To update the app later, upload the changed source files, copy them into
 `sudo systemctl restart recast-republic`. Back up
 `/var/lib/recast-republic/store.sqlite` securely and test restoring backups.
 
-## Grant seller or admin access
+## Seller applications and admin access
 
-New accounts are buyers by default and cannot grant themselves elevated access.
-After creating the account, update its role in the local database with SQLite:
+New accounts are buyers by default. They can select Seller Login or submit a
+seller application during registration or later from Settings. Applications
+remain pending until an admin reviews them under Seller Center; approval grants
+the seller role, and rejection leaves the account as a buyer.
+
+To bootstrap the first admin, create an account and set its role in SQLite.
+Register the account matching `ADMIN_EMAIL` first, then run this local command
+from the app directory (using the configured database path):
 
 ```sh
-sqlite3 data/recast-republic.sqlite "update app_users set role='seller' where email='seller@example.com';"
-sqlite3 data/recast-republic.sqlite "update app_users set role='admin' where email='recastrepublic29@gmail.com';"
+npm run admin:promote -- recastrepublic29@gmail.com
 ```
 
-If the SQLite CLI is not installed, use a SQLite database manager to run the
-same `UPDATE` statements against `data/recast-republic.sqlite`. Sign out and
-back in so the store reloads the role. Sellers can manage products, orders, and
-buyer support messages. Admins can also restore the original catalog and
-download a JSON export. Protect the database, backups, and downloaded exports as
-sensitive personal data.
+The command only promotes the email configured by `ADMIN_EMAIL`; on the VPS,
+run it after registering that account and while `DB_PATH` points to the
+production database. Sign out and back in so the store reloads the role. Admins
+can review seller applications, restore the original catalog, and download a
+JSON export of accounts (excluding passwords), profiles, carts, products,
+orders, seller applications, messages, and notifications. Use the SQLite
+database itself for a full backup. Protect the database, backups, and downloaded
+exports as sensitive personal data.
