@@ -11,10 +11,22 @@ const Database = require("better-sqlite3");
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || "127.0.0.1";
-const CORS_ORIGINS = new Set(
-  (process.env.CORS_ORIGINS || "https://macsubido29-bit.github.io")
-    .split(",").map(origin => origin.trim()).filter(Boolean)
-);
+const allowedOrigins = [
+  ...(process.env.CORS_ORIGINS || "").split(","),
+  ...(process.env.WEBSITE_URL || "https://macsubido29-bit.github.io").split(",")
+].map(value => value.trim()).filter(Boolean).map(value => {
+  let origin;
+  try {
+    origin = new URL(value);
+  } catch {
+    throw new Error(`Invalid website origin in CORS settings: ${value}`);
+  }
+  if (!["http:", "https:"].includes(origin.protocol)) {
+    throw new Error(`Website origin must use HTTP or HTTPS: ${value}`);
+  }
+  return origin.origin;
+});
+const CORS_ORIGINS = new Set(allowedOrigins);
 const SESSION_MS = 1000 * 60 * 60 * 24 * 14;
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "recastrepublic29@gmail.com").trim().toLowerCase();
 const DB_PATH = path.resolve(__dirname, process.env.DB_PATH || "data/recast-republic.sqlite");
@@ -230,13 +242,15 @@ async function optionalUser(req, res, next) {
 
 function requireSeller(req, res, next) {
   if (req.user.role !== "seller" && req.user.role !== "admin") {
-    return res.status(403).json({ error: "Seller or admin access is required." });
+    return res.status(403).json({ error: "Seller access is not active for this account. Submit a seller application in Settings and wait for an admin to approve it." });
   }
   next();
 }
 
 function requireAdmin(req, res, next) {
-  if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access is required." });
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ error: "Admin access is required. Sign in with the configured admin account." });
+  }
   next();
 }
 
@@ -252,6 +266,7 @@ function validImageData(value, limit) {
 function productDto(row) {
   return {
     id: Number(row.id),
+    ownerId: row.owner_id === null || row.owner_id === undefined ? null : Number(row.owner_id),
     name: row.name,
     price: Number(row.price),
     emoji: row.emoji,
@@ -292,23 +307,65 @@ function messageDto(row) {
 }
 
 async function notifyAdmin(subject, body, replyTo) {
-  const required = ["SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD", "SMTP_FROM"];
-  if (required.some(name => !process.env[name])) return false;
-  const nodemailer = require("nodemailer");
-  const transport = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: process.env.SMTP_SECURE === "true",
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
-  });
+  const status = smtpStatus();
+  if (status.missing.length) return false;
+  if (status.errors.length) throw new Error(status.errors.join(" "));
+  const transport = createSmtpTransport();
   await transport.sendMail({
-    from: process.env.SMTP_FROM,
+    from: process.env.SMTP_FROM?.trim() || process.env.SMTP_USER.trim(),
     to: ADMIN_EMAIL,
     ...(validEmail(replyTo) ? { replyTo } : {}),
     subject,
     text: body
   });
   return true;
+}
+
+function smtpStatus() {
+  const required = ["SMTP_USER", "SMTP_PASSWORD"];
+  const missing = required.filter(name => !process.env[name]?.trim());
+  const errors = [];
+  const portText = process.env.SMTP_PORT?.trim() || "587";
+  const port = Number(portText);
+  const secureText = process.env.SMTP_SECURE?.trim().toLowerCase() || "false";
+  if (process.env.SMTP_FROM?.trim() && !validEmail(process.env.SMTP_FROM.trim())) {
+    errors.push("SMTP_FROM must be a valid email address.");
+  }
+  if (!/^\d+$/.test(portText) || !Number.isInteger(port) || port < 1 || port > 65535) {
+    errors.push("SMTP_PORT must be a number between 1 and 65535.");
+  }
+  if (!["true", "false"].includes(secureText)) {
+    errors.push("SMTP_SECURE must be true or false.");
+  }
+  if (process.env.SMTP_USER?.trim() && !validEmail(process.env.SMTP_USER.trim())) {
+    errors.push("SMTP_USER must be a valid email address.");
+  }
+  return {
+    configured: missing.length === 0 && errors.length === 0,
+    missing,
+    errors,
+    host: process.env.SMTP_HOST?.trim() || "smtp.gmail.com",
+    port,
+    secure: secureText === "true"
+  };
+}
+
+function createSmtpTransport() {
+  const status = smtpStatus();
+  if (status.missing.length) {
+    throw new Error(`SMTP is missing required settings: ${status.missing.join(", ")}.`);
+  }
+  if (status.errors.length) throw new Error(status.errors.join(" "));
+  const nodemailer = require("nodemailer");
+  return nodemailer.createTransport({
+    host: status.host,
+    port: status.port,
+    secure: status.secure,
+    auth: {
+      user: process.env.SMTP_USER.trim(),
+      pass: process.env.SMTP_PASSWORD.trim()
+    }
+  });
 }
 
 app.get("/api/health", async (req, res, next) => {
@@ -324,11 +381,15 @@ app.post("/api/auth/register", authLimiter, async (req, res, next) => {
   const name = typeof req.body.name === "string" ? req.body.name.trim() : "";
   const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
   const password = req.body.password;
+  const accountType = req.body.accountType === "seller" ? "seller" : "buyer";
+  const businessName = typeof req.body.businessName === "string" ? req.body.businessName.trim() : "";
+  const businessInfo = typeof req.body.businessInfo === "string" ? req.body.businessInfo.trim() : "";
   if (req.body.privacyConsent !== true) {
     return res.status(400).json({ error: "Consent to the account data storage notice is required." });
   }
   if (!name || name.length > 100 || !validEmail(email) ||
-      typeof password !== "string" || password.length < 8 || password.length > 200) {
+      typeof password !== "string" || password.length < 8 || password.length > 200 ||
+      (accountType === "seller" && (!businessName || businessName.length > 160 || businessInfo.length > 2000))) {
     return res.status(400).json({ error: "Enter a name, valid email, and password of at least 8 characters." });
   }
   const client = await pool.connect();
@@ -341,6 +402,12 @@ app.post("/api/auth/register", authLimiter, async (req, res, next) => {
       [email, name, hash]
     );
     await client.query("insert into profiles(user_id) values ($1)", [created.rows[0].id]);
+    if (accountType === "seller") {
+      await client.query(
+        "insert into seller_applications(user_id, business_name, business_info) values ($1, $2, $3)",
+        [created.rows[0].id, businessName, businessInfo]
+      );
+    }
     const token = crypto.randomBytes(32).toString("base64url");
     await client.query(
       "insert into app_sessions(token_hash, user_id, expires_at) values ($1, $2, now() + interval '14 days')",
@@ -348,13 +415,87 @@ app.post("/api/auth/register", authLimiter, async (req, res, next) => {
     );
     await client.query("commit");
     setSessionCookie(res, token);
-    res.status(201).json({ user: publicUser(created.rows[0]) });
+    let sellerApplicationEmailSent = false;
+    if (accountType === "seller") {
+      try {
+        sellerApplicationEmailSent = await notifyAdmin(
+          "Seller application awaiting review",
+          `A seller application is awaiting review in Recast Republic Seller Center.\n\nApplicant: ${name}\nEmail: ${email}\nBusiness: ${businessName}\nBusiness details: ${businessInfo || "None provided."}\n\nSign in with an administrator account to approve or reject this application.`,
+          email
+        );
+      } catch (emailError) {
+        console.error("Could not send seller-application admin email:", emailError.message);
+      }
+    }
+    res.status(201).json({
+      user: publicUser(created.rows[0]),
+      sellerApplicationSubmitted: accountType === "seller",
+      sellerApplicationEmailSent
+    });
   } catch (error) {
     await client.query("rollback");
     if (error.code === "23505") return res.status(409).json({ error: "An account with this email already exists." });
     next(error);
   } finally {
     client.release();
+  }
+});
+
+app.get("/api/auth/seller-application", requireUser, async (req, res, next) => {
+  try {
+    const result = await pool.query(
+      "select status from seller_applications where user_id=$1",
+      [req.user.id]
+    );
+    res.json({ status: result.rows[0]?.status || "none" });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/api/seller-applications", requireUser, async (req, res, next) => {
+  const businessName = typeof req.body.businessName === "string" ? req.body.businessName.trim() : "";
+  const businessInfo = typeof req.body.businessInfo === "string" ? req.body.businessInfo.trim() : "";
+  if (req.user.role !== "buyer") {
+    return res.status(400).json({ error: "This account does not need seller access." });
+  }
+  if (!businessName || businessName.length > 160 || businessInfo.length > 2000) {
+    return res.status(400).json({ error: "Enter a business name and keep the description under 2,000 characters." });
+  }
+  try {
+    const existing = await pool.query(
+      "select status from seller_applications where user_id=$1",
+      [req.user.id]
+    );
+    if (existing.rows[0]?.status === "pending" || existing.rows[0]?.status === "approved") {
+      return res.status(409).json({
+        error: existing.rows[0].status === "pending"
+          ? "Your seller application is already awaiting review."
+          : "This account already has seller access."
+      });
+    }
+    const result = await pool.query(
+      `insert into seller_applications(user_id, business_name, business_info, status, created_at, updated_at, reviewed_at)
+       values ($1, $2, $3, 'pending', now(), now(), null)
+       on conflict(user_id) do update set business_name=excluded.business_name,
+         business_info=excluded.business_info, status='pending',
+         created_at=now(), updated_at=now(), reviewed_at=null
+       returning id, business_name, business_info, status, created_at`,
+      [req.user.id, businessName, businessInfo]
+    );
+    let emailSent = false;
+    try {
+      emailSent = await notifyAdmin(
+        "Seller application awaiting review",
+        `A seller application is awaiting review in Recast Republic Seller Center.\n\nApplicant: ${req.user.name}\nEmail: ${req.user.email}\nBusiness: ${businessName}\nBusiness details: ${businessInfo || "None provided."}\n\nSign in with an administrator account to approve or reject this application.`,
+        req.user.email
+      );
+    } catch (emailError) {
+      console.error("Could not send seller-application admin email:", emailError.message);
+    }
+    res.status(201).json({ ...result.rows[0], adminEmailSent: emailSent });
+  } catch (error) {
+    next(error);
   }
 });
 
@@ -402,7 +543,7 @@ app.post("/api/auth/logout", requireUser, async (req, res, next) => {
 app.get("/api/products", async (req, res, next) => {
   try {
     const result = await pool.query(
-      "select id, name, description, price, emoji, photo_data from products order by created_at desc, id desc"
+      "select id, owner_id, name, description, price, emoji, photo_data from products order by created_at desc, id desc"
     );
     res.json(result.rows.map(productDto));
   } catch (error) {
@@ -423,7 +564,7 @@ app.post("/api/products", requireUser, requireSeller, async (req, res, next) => 
     const result = await pool.query(
       `insert into products(owner_id, name, description, price, emoji, photo_data)
        values ($1, $2, $3, $4, $5, $6)
-       returning id, name, description, price, emoji, photo_data`,
+       returning id, owner_id, name, description, price, emoji, photo_data`,
       [req.user.id, name.trim(), desc.trim(), Number(price), emoji || "📦", photo || ""]
     );
     res.status(201).json(productDto(result.rows[0]));
@@ -445,7 +586,7 @@ app.patch("/api/products/:id", requireUser, requireSeller, async (req, res, next
     const result = await pool.query(
       `update products set name=$1, description=$2, price=$3, emoji=$4, photo_data=$5, updated_at=now()
         where id=$6 and ($7 = 'admin' or owner_id=$8)
-        returning id, name, description, price, emoji, photo_data`,
+        returning id, owner_id, name, description, price, emoji, photo_data`,
       [name.trim(), desc.trim(), Number(price), emoji || "📦", photo || "", Number(req.params.id), req.user.role, req.user.id]
     );
     if (!result.rowCount) return res.status(404).json({ error: "Product not found or not editable by this account." });
@@ -463,6 +604,59 @@ app.delete("/api/products/:id", requireUser, requireSeller, async (req, res, nex
     );
     if (!result.rowCount) return res.status(404).json({ error: "Product not found or not editable by this account." });
     res.json({ ok: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/cart", requireUser, async (req, res, next) => {
+  try {
+    const result = await pool.query("select items from carts where user_id=$1", [req.user.id]);
+    const row = result.rows[0];
+    res.json({
+      items: row ? JSON.parse(row.items) : [],
+      saved: Boolean(row)
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.put("/api/cart", requireUser, async (req, res, next) => {
+  const items = req.body.items;
+  if (!Array.isArray(items) || items.length > 100) {
+    return res.status(400).json({ error: "The cart must contain no more than 100 items." });
+  }
+  const quantities = new Map();
+  for (const item of items) {
+    const id = Number(item?.id);
+    const qty = Number(item?.qty);
+    if (!Number.isSafeInteger(id) || id < 1 || !Number.isSafeInteger(qty) || qty < 1 || qty > 99) {
+      return res.status(400).json({ error: "One or more cart items are invalid." });
+    }
+    quantities.set(id, (quantities.get(id) || 0) + qty);
+  }
+  if ([...quantities.values()].some(qty => qty > 99)) {
+    return res.status(400).json({ error: "Each product quantity must be 99 or less." });
+  }
+  try {
+    const ids = [...quantities.keys()];
+    if (ids.length) {
+      const available = await pool.query(
+        `select id from products where id in (${ids.map(() => "?").join(",")})`,
+        ids
+      );
+      if (available.rowCount !== ids.length) {
+        return res.status(400).json({ error: "A cart item is no longer available. Refresh the catalog." });
+      }
+    }
+    const normalizedItems = [...quantities].map(([id, qty]) => ({ id, qty }));
+    await pool.query(
+      `insert into carts(user_id, items, updated_at) values($1, $2, now())
+       on conflict(user_id) do update set items=excluded.items, updated_at=now()`,
+      [req.user.id, JSON.stringify(normalizedItems)]
+    );
+    res.json({ items: normalizedItems, saved: true });
   } catch (error) {
     next(error);
   }
@@ -768,11 +962,15 @@ app.post("/api/messages", requireUser, async (req, res, next) => {
 
 app.get("/api/admin/export", requireUser, requireAdmin, async (req, res, next) => {
   try {
-    const [users, profiles, orders, messages, products, notifications] = await Promise.all([
+    const [users, profiles, carts, orders, messages, products, notifications, sellerApplications] = await Promise.all([
       pool.query("select id, email, name, role, privacy_consent_at, created_at from app_users order by created_at desc"),
       pool.query(
         `select u.email, p.gender, p.birthday, p.phone, p.address, p.address_data, p.avatar_data, p.updated_at
          from profiles p join app_users u on u.id=p.user_id order by p.updated_at desc`
+      ),
+      pool.query(
+        `select u.email, c.items, c.updated_at
+         from carts c join app_users u on u.id=c.user_id order by c.updated_at desc`
       ),
       pool.query("select * from orders order by created_at desc"),
       pool.query(
@@ -783,21 +981,110 @@ app.get("/api/admin/export", requireUser, requireAdmin, async (req, res, next) =
       pool.query(
         `select u.email, n.body, n.created_at, n.read_at
          from notifications n join app_users u on u.id=n.user_id order by n.created_at desc`
+      ),
+      pool.query(
+        `select u.email, u.name, a.business_name, a.business_info, a.status,
+                a.created_at, a.updated_at, a.reviewed_at
+         from seller_applications a join app_users u on u.id=a.user_id
+         order by a.created_at desc`
       )
     ]);
     res.json({
       generatedAt: new Date().toISOString(),
       users: users.rows,
       profiles: profiles.rows,
+      carts: carts.rows.map(row => ({ ...row, items: JSON.parse(row.items) })),
       orders: orders.rows.map(orderDto),
       messages: messages.rows.map(row => ({
         buyer: row.buyer_email, sender: row.sender_role, text: row.body, date: row.created_at
       })),
       products: products.rows,
-      notifications: notifications.rows
+      notifications: notifications.rows,
+      sellerApplications: sellerApplications.rows
     });
   } catch (error) {
     next(error);
+  }
+});
+
+app.get("/api/admin/email-status", requireUser, requireAdmin, (req, res) => {
+  const status = smtpStatus();
+  res.json({
+    configured: status.configured,
+    missing: status.missing,
+    errors: status.errors,
+    adminEmail: ADMIN_EMAIL
+  });
+});
+
+app.post("/api/admin/test-email", requireUser, requireAdmin, async (req, res) => {
+  const status = smtpStatus();
+  if (!status.configured) {
+    const details = [...status.missing.map(name => `${name} is empty.`), ...status.errors].join(" ");
+    return res.status(503).json({ error: `SMTP is not ready. ${details}` });
+  }
+  try {
+    await notifyAdmin(
+      "Recast Republic SMTP test",
+      `SMTP test email sent successfully at ${new Date().toISOString()}.`
+    );
+    res.json({ ok: true, sentTo: ADMIN_EMAIL });
+  } catch (error) {
+    console.error("Could not send SMTP test email:", error);
+    res.status(502).json({ error: "SMTP could not send the test email. Check the server logs and SMTP settings." });
+  }
+});
+
+app.get("/api/admin/seller-applications", requireUser, requireAdmin, async (req, res, next) => {
+  try {
+    const result = await pool.query(
+      `select a.id, a.user_id, a.business_name, a.business_info, a.status, a.created_at,
+              u.name as applicant_name, u.email as applicant_email
+         from seller_applications a join app_users u on u.id=a.user_id
+        order by case when a.status='pending' then 0 else 1 end, a.created_at desc`
+    );
+    res.json(result.rows);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.patch("/api/admin/seller-applications/:id", requireUser, requireAdmin, async (req, res, next) => {
+  const status = req.body.status;
+  if (!["approved", "rejected"].includes(status)) {
+    return res.status(400).json({ error: "Application decision must be approved or rejected." });
+  }
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    const result = await client.query(
+      `update seller_applications
+          set status=$1, updated_at=now(), reviewed_at=now()
+        where id=$2 and status='pending'
+        returning user_id, business_name`,
+      [status, Number(req.params.id)]
+    );
+    if (!result.rowCount) {
+      await client.query("rollback");
+      return res.status(404).json({ error: "Pending seller application not found." });
+    }
+    const application = result.rows[0];
+    if (status === "approved") {
+      await client.query("update app_users set role='seller' where id=$1", [application.user_id]);
+    }
+    await client.query(
+      "insert into notifications(user_id, body) values ($1, $2)",
+      [application.user_id, status === "approved"
+        ? "Your seller application was approved. Sign in using Seller Login to access Seller Center."
+        : "Your seller application was not approved. Contact store support if you have questions."]
+    );
+    await client.query("commit");
+    res.json({ id: Number(req.params.id), status, businessName: application.business_name });
+  } catch (error) {
+    await client.query("rollback");
+    next(error);
+  } finally {
+    client.release();
   }
 });
 
@@ -814,7 +1101,7 @@ app.post("/api/admin/restore-products", requireUser, requireAdmin, async (req, r
     }
     await client.query("commit");
     const result = await client.query(
-      "select id, name, description, price, emoji, photo_data from products order by id"
+      "select id, owner_id, name, description, price, emoji, photo_data from products order by id"
     );
     res.json(result.rows.map(productDto));
   } catch (error) {
@@ -838,6 +1125,13 @@ app.use((error, req, res, next) => {
 
 async function start() {
   database.exec(fs.readFileSync(path.join(__dirname, "db", "schema.sql"), "utf8"));
+  const emailStatus = smtpStatus();
+  if (!emailStatus.configured) {
+    console.warn("SMTP email notifications are not ready:", [
+      ...emailStatus.missing.map(name => `${name} is empty.`),
+      ...emailStatus.errors
+    ].join(" "));
+  }
   const count = await pool.query("select count(*) as count from products");
   if (count.rows[0].count === 0) {
     for (const [id, name, price, emoji, description] of DEFAULT_PRODUCTS) {
