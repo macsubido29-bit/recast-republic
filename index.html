@@ -113,14 +113,28 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <p class="small" style="text-align:center">ARMORY COLLECTIBLES</p>
 <hr>
 <form id="loginForm" onsubmit="event.preventDefault();login()">
-<h2 style="text-align:center">Buyer Login</h2>
+<div class="account-grid" style="margin-bottom:12px">
+<button id="buyerLoginMode" class="btn gold" type="button" onclick="setLoginMode('buyer')">Buyer Login</button>
+<button id="sellerLoginModeButton" class="btn light" type="button" onclick="setLoginMode('seller')">Seller Login</button>
+</div>
+<h2 id="loginTitle" style="text-align:center">Buyer Login</h2>
 <label>Email</label><input id="loginEmail" type="email" autocomplete="username" placeholder="Email address" required>
 <label>Password</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password" required>
 <button class="btn gold" style="width:100%" type="submit">Login</button>
 <p style="text-align:center">No account? <a href="#" onclick="showRegister();return false" style="color:#d5ae68">Register</a></p>
 </form>
 <form id="registerForm" style="display:none" onsubmit="event.preventDefault();register()">
-<h2>Create Buyer Account</h2>
+<h2>Create Account</h2>
+<label>Account type</label>
+<select id="registerAccountType" onchange="updateRegisterAccountType()">
+<option value="buyer">Buyer account</option>
+<option value="seller">Seller account (requires admin approval)</option>
+</select>
+<div id="sellerRegistrationFields" style="display:none">
+<label>Shop / Business Name</label><input id="registerBusinessName" maxlength="160" placeholder="Your shop name">
+<label>What do you plan to sell?</label><textarea id="registerBusinessInfo" maxlength="2000" placeholder="Briefly describe your products"></textarea>
+<p class="small">Seller applications are reviewed by the store administrator. Seller tools stay locked until approval.</p>
+</div>
 <label>Full Name</label><input id="regName" autocomplete="name" placeholder="Full name" required>
 <label>Email</label><input id="regEmail" type="email" autocomplete="email" placeholder="Email address" required>
 <label>Password</label><input id="regPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Password" required>
@@ -261,6 +275,15 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <p class="small">Authorized seller access to manage products and orders.</p>
 <button class="btn gold" style="width:100%" onclick="sellerLogin()">Enter Seller Mode</button>
 </div>
+<div class="card" id="sellerApplicationCard">
+<h3>Apply for Seller Access</h3>
+<p class="small" id="sellerApplicationStatus">Seller applications are reviewed by the store administrator.</p>
+<form id="sellerApplicationForm" onsubmit="event.preventDefault();submitSellerApplication()">
+<label>Shop / Business Name</label><input id="applicationBusinessName" maxlength="160" required>
+<label>What do you plan to sell?</label><textarea id="applicationBusinessInfo" maxlength="2000" placeholder="Briefly describe your products"></textarea>
+<button class="btn gold" type="submit">Submit Seller Application</button>
+</form>
+</div>
 <div class="card"><button class="btn red" style="width:100%" onclick="logout()">Logout</button></div>
 <div class="card"><button class="btn light" style="width:100%" onclick="switchAccount()">Switch Account / Register Another</button></div>
 </section>
@@ -312,7 +335,11 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <button class="back" onclick="openPage('settings')">← Settings</button>
 <div class="seller-heading">
 <p style="color:var(--gold)">RECAST REPUBLIC / ADMIN</p>
-<h2>🛡️ Seller Center</h2><p class="small">Store management dashboard</p>
+<h2>🛡️ Seller Center</h2><p class="small">Shared marketplace catalog and orders. Sellers can edit only their own listings.</p>
+</div>
+<div class="card" id="sellerApplicationReview" hidden>
+<h3>Seller Applications</h3>
+<div id="sellerApplicationList"></div>
 </div>
 <div class="account-grid" style="margin:12px 0">
 <div class="card"><span>📦</span><h3 id="sellerProductCount">0</h3><small>Products</small></div>
@@ -329,11 +356,17 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <div id="newPhotoPreview" class="photo" style="display:none;height:120px;margin:0 0 12px;border-radius:6px"></div>
 <button class="btn gold" style="width:100%" onclick="addProduct()">Add Product</button>
 </div>
-<div class="card"><h3>📦 Manage Products</h3><div id="sellerProductList"></div></div>
+<div class="card"><h3>📦 Marketplace Products</h3><div id="sellerProductList"></div></div>
 <div class="card" id="adminRestoreTools" hidden><h3>♻️ Restore Armory</h3><p class="small">Restore the original Recast Republic collectibles if the catalog was cleared.</p><button class="btn light" style="width:100%" onclick="restoreDefaultProducts()">Restore Default Collectibles</button></div>
 <div class="card"><h3>🧾 Customer Orders</h3><div id="sellerOrders"></div></div>
 <div class="card"><h3>💬 Customer Messages</h3><p class="small">Reply to customer messages here.</p><div id="sellerMessages"></div></div>
-<div class="card" id="adminDataTools" hidden><h3>Admin data</h3><p class="small">Download account, profile, product, order, message, and notification data stored on this server.</p><button class="btn light" onclick="exportVisitorData()">Download server data</button></div>
+<div class="card" id="adminDataTools" hidden><h3>Admin tools</h3>
+<p class="small">Email notifications to the store administrator.</p>
+<p class="small" id="adminEmailStatus">Checking email settings...</p>
+<button class="btn light" onclick="checkAdminEmail()">Check email settings</button>
+<button class="btn gold" onclick="sendTestEmail()">Send test email</button>
+<hr><p class="small">Download account, profile, cart, product, order, seller application, message, and notification data stored on this server.</p>
+<button class="btn light" onclick="exportVisitorData()">Download server data</button></div>
 <button class="btn red" style="width:100%" onclick="openPage('settings')">Exit Seller Mode</button>
 </section>
 </main>
@@ -380,9 +413,11 @@ let notifications=[];
 let profiles={};
 let addresses={};
 let messages=[];
+let cartSaveQueue=Promise.resolve();
 let currentProduct=null;
 let newProductPhoto="";
 let catalogRefreshTimer=null;
+let sellerLoginMode=false;
 
 const ADMIN_EMAIL="recastrepublic29@gmail.com";
 const API_BASE_URL=(window.RR_API_BASE_URL||"").replace(/\/+$/,"");
@@ -392,15 +427,18 @@ try{
 response=await fetch(API_BASE_URL+"/api"+path,{credentials:"include",...options,
 headers:{"Content-Type":"application/json",...(options.headers||{})}});
 }catch(error){
-throw new Error("Cannot connect to the store API. Check the VPS and its CORS configuration.");
+throw new Error(`Cannot connect to the store API${API_BASE_URL?` at ${API_BASE_URL}`:""}. Confirm that the API server is deployed, HTTPS is working, and this website is allowed by CORS.`);
 }
 let result={};
 try{result=await response.json()}catch{}
 if(!response.ok){
 if(!response.headers.get("content-type")?.includes("application/json")&&response.status===404&&location.hostname.endsWith("github.io")){
-throw new Error("Registration needs the store API, but GitHub Pages only serves the website. Deploy the Node.js API and set its URL in api-config.js.");
+throw new Error(`Login and registration need the store API. GitHub Pages only serves the website; the API${API_BASE_URL?` at ${API_BASE_URL}`:""} is not connected or deployed.`);
 }
 throw new Error(result.error||`The store request failed (${response.status}).`);
+}
+if(!response.headers.get("content-type")?.includes("application/json")){
+throw new Error("The store API returned an unexpected response. Check the VPS API URL and deployment.");
 }
 return result;
 }
@@ -424,6 +462,27 @@ async function refreshPrivateData(){
 let data=await Promise.all([api("/orders"),api("/messages"),api("/notifications"),api("/profile"),api("/address")]);
 orders=data[0];messages=data[1];notifications=data[2];profiles[key()]=data[3];addresses[key()]=data[4];
 }
+function readLegacyCart(email){
+try{
+let items=JSON.parse(localStorage.getItem("rrCart_"+email)||"[]");
+if(!Array.isArray(items))return [];
+return items.filter(item=>Number.isSafeInteger(Number(item?.id))&&Number(item.id)>0&&
+Number.isSafeInteger(Number(item?.qty))&&Number(item.qty)>0&&Number(item.qty)<=99)
+.map(item=>({id:Number(item.id),qty:Number(item.qty)})).slice(0,100);
+}catch(error){
+console.error("Could not read the older browser cart:",error);
+return [];
+}
+}
+async function loadCart(){
+let email=key(),legacyCart=readLegacyCart(email),stored=await api("/cart");
+cart=stored.items;
+if(legacyCart.length){
+let saved=await api("/cart",{method:"PUT",body:JSON.stringify({items:legacyCart})});
+cart=saved.items;
+}
+localStorage.removeItem("rrCart_"+email);
+}
 async function refreshVisiblePrivateData(){
 if(!user)return;
 try{
@@ -445,7 +504,7 @@ try{
 let session=await api("/auth/session");
 if(session.user){
 user=session.user;
-cart=JSON.parse(localStorage.getItem("rrCart_"+key())||"[]");
+await loadCart();
 await refreshPrivateData();enterApp();
 }else{
 showPublicCatalog();
@@ -471,7 +530,17 @@ status.textContent=message;
 }
 function key(){return user?.email?.toLowerCase()||"guest"}
 function save(){
-if(user)localStorage.setItem("rrCart_"+key(),JSON.stringify(cart));
+if(!user)return;
+let email=key(),items=cart.map(item=>({id:item.id,qty:item.qty}));
+localStorage.setItem("rrCart_"+email,JSON.stringify(items));
+cartSaveQueue=cartSaveQueue.catch(()=>{}).then(()=>api("/cart",{
+method:"PUT",body:JSON.stringify({items})
+})).then(()=>{
+localStorage.removeItem("rrCart_"+email);
+}).catch(error=>{
+console.error("Could not save the cart to the store:",error);
+alert("Your cart could not be saved to your account. It is kept in this browser for now. "+error.message);
+});
 }
 function profile(){return profiles[key()]||{}}
 function address(){return addresses[key()]||{}}
@@ -479,8 +548,21 @@ function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&l
 function money(n){return "₱"+Number(n).toLocaleString("en-PH")}
 
 // AUTH
-function showRegister(){loginForm.style.display="none";registerForm.style.display="block"}
-function showLogin(){loginForm.style.display="block";registerForm.style.display="none"}
+function setLoginMode(mode){
+sellerLoginMode=mode==="seller";
+loginTitle.textContent=sellerLoginMode?"Seller Login":"Buyer Login";
+buyerLoginMode.classList.toggle("gold",!sellerLoginMode);
+buyerLoginMode.classList.toggle("light",sellerLoginMode);
+document.getElementById("sellerLoginModeButton").classList.toggle("gold",sellerLoginMode);
+document.getElementById("sellerLoginModeButton").classList.toggle("light",!sellerLoginMode);
+}
+function showRegister(){loginForm.style.display="none";registerForm.style.display="block";updateRegisterAccountType()}
+function showLogin(){loginForm.style.display="block";registerForm.style.display="none";setLoginMode("buyer")}
+function updateRegisterAccountType(){
+let seller=registerAccountType.value==="seller";
+sellerRegistrationFields.style.display=seller?"block":"none";
+registerBusinessName.required=seller;
+}
 function showAuth(){
 document.getElementById("login").classList.add("active");
 header.style.display="none";app.style.display="none";nav.style.display="none";
@@ -500,10 +582,17 @@ async function register(){
 let name=regName.value.trim(),email=regEmail.value.trim().toLowerCase(),pass=regPassword.value;
 if(!name||!email.includes("@")||pass.length<8){alert("Enter your name, valid email and a password of at least 8 characters.");return}
 if(!privacyConsent.checked){alert("Please agree to the account data storage notice to register.");return}
+let accountType=registerAccountType.value;
+let businessName=registerBusinessName.value.trim(),businessInfo=registerBusinessInfo.value.trim();
+if(accountType==="seller"&&!businessName){alert("Enter your shop or business name to apply for seller access.");return}
 try{
-let result=await api("/auth/register",{method:"POST",body:JSON.stringify({name,email,password:pass,privacyConsent:true})});
+let result=await api("/auth/register",{method:"POST",body:JSON.stringify({name,email,password:pass,privacyConsent:true,accountType,businessName,businessInfo})});
 user=result.user;cart=[];profiles[key()]={name:user.name,email:user.email};
+await loadCart();
 await refreshPrivateData();enterApp();
+if(result.sellerApplicationSubmitted)alert(result.sellerApplicationEmailSent
+?"Your account and seller application were submitted. The administrator was emailed; Seller Center access starts after approval."
+:"Your account and seller application were submitted, but the administrator email was not sent. Seller Center access starts after approval; contact store support.");
 }catch(error){alert(error.message)}
 }
 async function login(){
@@ -511,7 +600,15 @@ let email=loginEmail.value.trim().toLowerCase(),pass=loginPassword.value;
 if(!email.includes("@")||!pass){alert("Enter valid login details.");return}
 try{
 let result=await api("/auth/login",{method:"POST",body:JSON.stringify({email,password:pass})});
-user=result.user;cart=JSON.parse(localStorage.getItem("rrCart_"+email)||"[]");
+if(sellerLoginMode&&!["seller","admin"].includes(result.user.role)){
+let application=await api("/auth/seller-application");
+await api("/auth/logout",{method:"POST"});
+let message=application.status==="pending"
+?"Your seller application is awaiting admin approval."
+:"This account has not been approved for Seller Center. Apply for seller access or sign in as a buyer.";
+throw new Error(message);
+}
+user=result.user;await loadCart();
 await refreshPrivateData();await refreshCatalog();enterApp();
 }catch(error){alert(error.message)}
 }
@@ -523,7 +620,11 @@ visitorActions.style.display="none";buyerShopButton.style.display="inline-block"
 if(user.role==="buyer"){document.querySelector('[onclick="sellerLogin()"]')?.closest(".card")?.setAttribute("hidden","")}
 else{document.querySelector('[onclick="sellerLogin()"]')?.closest(".card")?.removeAttribute("hidden")}
 adminDataTools.hidden=user.role!=="admin";
+if(user.role==="admin")checkAdminEmail();
 adminRestoreTools.hidden=user.role!=="admin";
+sellerApplicationReview.hidden=user.role!=="admin";
+sellerApplicationCard.hidden=user.role!=="buyer";
+if(user.role==="buyer")loadSellerApplicationStatus();
 renderProducts();updateAccount();updateCart();openPage("home");
 }
 function logout(){
@@ -532,7 +633,10 @@ endSession();
 }
 function switchAccount(){endSession()}
 async function endSession(){
-if(user)localStorage.setItem("rrCart_"+key(),JSON.stringify(cart));
+if(user){
+localStorage.setItem("rrCart_"+key(),JSON.stringify(cart));
+await cartSaveQueue;
+}
 try{await api("/auth/logout",{method:"POST"})}catch(error){console.error("Could not clear server session:",error)}
 user=null;cart=[];orders=[];notifications=[];messages=[];profiles={};addresses={};
 loginEmail.value="";loginPassword.value="";
@@ -774,6 +878,76 @@ function sellerLogin(){
 if(!user||!["seller","admin"].includes(user.role)){alert("Seller access must be granted by the site administrator.");return}
 openPage("seller");
 }
+async function loadSellerApplicationStatus(){
+try{
+let result=await api("/auth/seller-application");
+let messages={
+none:"Seller applications are reviewed by the store administrator.",
+pending:"Your application is awaiting admin review. Seller tools stay locked until approval.",
+approved:"Your seller access is approved. Sign out and use Seller Login to enter Seller Center.",
+rejected:"Your previous application was not approved. You may submit an updated application."
+};
+sellerApplicationStatus.textContent=messages[result.status]||messages.none;
+sellerApplicationForm.hidden=result.status==="pending"||result.status==="approved";
+}catch(error){
+sellerApplicationStatus.textContent=error.message;
+}
+}
+async function submitSellerApplication(){
+let businessName=applicationBusinessName.value.trim();
+let businessInfo=applicationBusinessInfo.value.trim();
+if(!businessName){alert("Enter your shop or business name.");return}
+try{
+let result=await api("/seller-applications",{method:"POST",body:JSON.stringify({businessName,businessInfo})});
+sellerApplicationForm.reset();
+await loadSellerApplicationStatus();
+alert(result.adminEmailSent
+?"Your seller application was submitted and the administrator was emailed for review."
+:"Your seller application was saved, but the administrator email was not sent. Contact store support for approval.");
+}catch(error){alert(error.message)}
+}
+async function renderSellerApplications(){
+if(user?.role!=="admin")return;
+try{
+let applications=await api("/admin/seller-applications");
+sellerApplicationList.innerHTML=applications.map(application=>`
+<div class="seller-product">
+<b>${esc(application.business_name)}</b>
+<p class="small">${esc(application.applicant_name)} · ${esc(application.applicant_email)}</p>
+<p>${esc(application.business_info||"No business description provided.")}</p>
+<p class="small">Status: ${esc(application.status)} · Submitted: ${esc(application.created_at)}</p>
+${application.status==="pending"?`<button class="btn gold" onclick="reviewSellerApplication(${application.id},'approved')">Approve Seller</button>
+<button class="btn red" onclick="reviewSellerApplication(${application.id},'rejected')">Reject</button>`:""}
+</div>`).join("")||'<p class="empty">No seller applications yet.</p>';
+}catch(error){
+sellerApplicationList.textContent=error.message;
+}
+}
+async function reviewSellerApplication(id,status){
+let action=status==="approved"?"approve":"reject";
+if(!confirm(`Are you sure you want to ${action} this seller application?`))return;
+try{
+await api("/admin/seller-applications/"+id,{method:"PATCH",body:JSON.stringify({status})});
+await renderSellerApplications();
+}catch(error){alert(error.message)}
+}
+async function checkAdminEmail(){
+try{
+let status=await api("/admin/email-status");
+adminEmailStatus.textContent=status.configured
+?`SMTP is configured. Test emails will be sent to ${status.adminEmail}.`
+:`Email alerts are not ready. ${[...status.missing.map(name=>`${name} is empty.`),...status.errors].join(" ")}`;
+}catch(error){adminEmailStatus.textContent=error.message}
+}
+async function sendTestEmail(){
+adminEmailStatus.textContent="Sending test email...";
+try{
+let result=await api("/admin/test-email",{method:"POST"});
+adminEmailStatus.textContent=`Test email sent to ${result.sentTo}. Check that inbox and spam folder.`;
+}catch(error){
+adminEmailStatus.textContent=error.message;
+}
+}
 function renderSeller(){
 sellerProductCount.textContent=products.length;
 sellerOrderCount.textContent=orders.length;
@@ -782,9 +956,9 @@ sellerProductList.innerHTML=products.map(p=>`
 <div class="seller-product"><div class="row"><div>
 <div class="row" style="justify-content:flex-start">${p.photo?`<img src="${esc(p.photo)}" alt="${esc(p.name)}" style="width:64px;height:64px;object-fit:cover;border-radius:6px">`:`<span>${esc(p.emoji)}</span>`}<b>${esc(p.name)}</b></div><p class="price">${money(p.price)}</p>
 <p class="small">${esc(p.desc)}</p></div>
-<div><button class="btn light" onclick="changeProductPhoto(${p.id})">📷 Photo</button>
+<div>${p.ownerId===user.id||user.role==="admin"?`<button class="btn light" onclick="changeProductPhoto(${p.id})">📷 Photo</button>
 <button class="btn gold" onclick="editProduct(${p.id})">✏️ Edit</button>
-<button class="btn red" onclick="deleteProduct(${p.id})">🗑️ Delete</button></div>
+<button class="btn red" onclick="deleteProduct(${p.id})">🗑️ Delete</button>`:'<span class="small">Shared listing · view only</span>'}</div>
 </div></div>`).join("")||'<p class="empty">No products.</p>';
 sellerOrders.innerHTML=orders.map(o=>`
 <div class="seller-product"><b>Order #${esc(o.id)}</b>
@@ -800,6 +974,7 @@ sellerOrders.innerHTML=orders.map(o=>`
 <button class="btn gold" onclick="updateSellerOrder('${esc(o.id)}')">Update Order</button>
 </div>`).join("")||'<p class="empty">No orders yet.</p>';
 renderSellerMessages();
+renderSellerApplications();
 }
 function messageThreads(){
 let buyers=[...new Set(messages.map(m=>m.buyer?.toLowerCase()).filter(Boolean))];
